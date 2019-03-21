@@ -1,0 +1,231 @@
+(relative-include "datetime.h")
+
+(deftype Timezone [
+  name String,
+  delta Long,
+  dst? Bool,
+])
+
+(defmodule Timezone
+  (def utc (init @"UTC" 0l false))
+  (defn zero [] (init @"" 0l false))
+
+  (defn = [a b]
+    (and* (= (name a) (name b))
+          (= (delta a) (delta b))
+          (= (dst? a) (dst? b))))
+)
+
+(deftype Datetime [
+  year Int,
+  month Int,
+  day Int,
+  hours (Maybe Int),
+  minutes (Maybe Int),
+  seconds (Maybe Int),
+  nanoseconds (Maybe Int),
+  tz (Maybe Timezone),
+])
+
+(defmodule Datetime
+  (register-type TM [
+    tm_sec Int,
+    tm_min Int,
+    tm_hour Int,
+    tm_mday Int,
+    tm_mon Int,
+    tm_year Int,
+    tm_wday Int,
+    tm_yday Int,
+    tm_isdst Int,
+    tm_zone String,
+    tm_gmtoff Long,
+  ])
+  (register create-time (Fn [] (Ref TM)) "create_time")
+
+  (def MONTH-STRINGS [
+    @"",
+    @"January",
+    @"February",
+    @"March",
+    @"April",
+    @"May",
+    @"June",
+    @"July",
+    @"August",
+    @"September",
+    @"October",
+    @"November",
+    @"December"
+  ])
+  (def WEEKDAY-STRINGS [
+    @"",
+    @"Monday",
+    @"Tuesday",
+    @"Wednesday",
+    @"Thursday",
+    @"Friday",
+    @"Saturday",
+    @"Sunday"
+  ])
+  (def DAYS-BEFORE-MONTH [0 0 31 59 90 120 151 181 212 243 273 304 334])
+  (def SECOND 1)
+  (def MINUTE (* 60 SECOND))
+  (def HOUR (* 60 MINUTE))
+  (def DAY (* 24 HOUR))
+  (def YEAR (* 365 DAY))
+
+  (defn is-leap [y] (and (= 0 (mod y 4)) (or (/= 0 (mod y 100)) (= 0 (mod y 400)))))
+  (defn days-before-year [year]
+    (let [y (Int.dec year)] (- (+ (* y 365) (+ (/ y 4) (/ y 400))) (/ y 100))))
+  (defn days-before-month [year month]
+    (if (and (> month 2) (is-leap year))
+      (Int.inc @(Array.nth &DAYS-BEFORE-MONTH month))
+      @(Array.nth &DAYS-BEFORE-MONTH month)))
+  (defn ymd2ord [year month day]
+    (+ (+ (days-before-year year) (days-before-month year month)) day))
+  (defn to-ordinal [dt] (ymd2ord @(year dt) @(month dt) @(day dt)))
+  (defn from-ordinal [ord] (Result.Error "TODO"))
+
+  (defn weekday [dt] (mod (+ (to-ordinal dt) 6) 7))
+  (defn yearday [dt] (+ @(Array.nth &DAYS-BEFORE-MONTH @(month dt)) @(day dt)))
+  (defn isoweekday [dt] (+ (weekday dt) 1))
+  (defn weekday-string [dt]
+    (let [modord (mod (to-ordinal dt) 7)]
+      @(Array.nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord))))
+  (defn weekday-short-string [dt]
+    (let [modord (mod (to-ordinal dt) 7)]
+      (prefix-string (Array.nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord)) 3)))
+  (defn month-string [dt] @(Array.nth &MONTH-STRINGS @(month dt)))
+  (defn month-short-string [dt]
+    (prefix-string (Array.nth &MONTH-STRINGS @(month dt)) 3))
+  (defn leap? [dt] (is-leap @(year dt)))
+
+  (defn for-year [years a b]
+    (Array.reduce &(fn [acc x] (if (is-leap @x) (+ a acc) (+ b acc)))
+                  0
+                  years))
+
+  (defn to-unix [y m d hh mm ss delta]
+    (let [yy (for-year &(Array.range 1970 y 1) 366 365)]
+      (+ (* yy DAY)
+         (+ (* @(Array.nth &DAYS-BEFORE-MONTH m) DAY)
+            (+ (* (Int.dec d) DAY)
+               (+ (* hh HOUR)
+                  (+ (* mm MINUTE)
+                     (+ (Long.to-int delta)
+                        ss))))))))
+
+  (defn to-unix-timestamp [dt]
+    (let [tz (Maybe.from @(tz dt) (Timezone.zero))]
+      (to-unix @(year dt) @(month dt) @(day dt) (Maybe.from @(hours dt) 0)
+               (Maybe.from @(minutes dt) 0) (Maybe.from @(seconds dt) 0)
+               @(Timezone.delta &tz))))
+
+  (defn from-unix-timestamp [ts]
+    (let [y (/ ts YEAR)
+          ld (Int.dec (for-year &(Array.range 1970 (+ y 1971) 1) 1 0))
+          d (- (- (/ ts DAY) (* y 365)) ld)
+          get-m-until (fn [n] (Array.reduce
+                                &(fn [acc x] (if (< @x n) @x acc))
+                                0
+                                &DAYS-BEFORE-MONTH))
+          mdays (get-m-until d)
+          m (Array.index-of &DAYS-BEFORE-MONTH &mdays)
+          nd (- d mdays)
+          tmpy (* y (* 365 24))
+          tmpd (* (+ nd (+ ld mdays)) 24)
+          hh (- (- (/ ts HOUR) tmpd) tmpy)
+          tmy (* tmpy 60)
+          tmd (* tmpd 60)
+          tmh (* hh 60)
+          mm (- (- (- (/ ts 60) tmh) tmd) tmy)
+          ss (- (- (- (- ts (* 60 mm)) (* tmh 60)) (* tmd 60)) (* tmy 60))]
+      (init (+ y 1970) m (Int.inc nd) (Maybe.Just hh) (Maybe.Just mm) (Maybe.Just ss)
+            (Maybe.Nothing) (Maybe.Nothing))))
+
+  ; TODO should this be case-insensitive?
+  (defn utc? [dt]
+    (or (Maybe.nothing? (tz dt))
+        (= &Timezone.utc &(Maybe.from @(tz dt) (Timezone.zero)))))
+
+  (defn isoformat [dt]
+    (fmt "%04d-%02d-%02d" @(year dt) @(month dt) @(day dt)))
+
+  (defn isotime [dt]
+    (fmt "%02d:%02d:%02d" (Maybe.from @(hours dt) 0)
+                          (Maybe.from @(minutes dt) 0)
+                          (Maybe.from @(seconds dt) 0)))
+
+  (defn now []
+    (let [t (System.nanotime)
+          ct (create-time)]
+      (init (+ @(TM.tm_year ct) 1900) (Int.inc @(TM.tm_mon ct)) @(TM.tm_mday ct)
+            (Maybe.Just @(TM.tm_hour ct))
+            (Maybe.Just @(TM.tm_min ct))
+            (Maybe.Just @(TM.tm_sec ct))
+            (Maybe.Just (Long.to-int (mod t 1000000000l)))
+            (Maybe.Just (Timezone.init @(TM.tm_zone ct)
+                                       @(TM.tm_gmtoff ct)
+                                       (/= 0 @(TM.tm_isdst ct)))))))
+
+  (register format (Fn [(Ref String) (Ref Datetime)] String))
+
+  (defn strftime [dt s]
+    (let [strings (String.split-by s &[\%])
+          ln (Int.dec (Array.length &strings))
+          rng (Array.range 0 ln 1)]
+      (String.concat &(Array.zip &(fn [x i]
+                                    (if (and (String.empty? x)
+                                             (or (= i &0) (= i &ln)))
+                                      @""
+                                      (if (String.empty? x)
+                                        @"%"
+                                        (format &(String.concat &[@"%" @x])
+                                                dt))))
+                                 &strings
+                                 &rng))))
+
+  (defn format-for [c dt]
+    (case c
+      \a (weekday-short-string dt)
+      \A (weekday-string dt)
+      \w (str (weekday dt))
+      \d (format "%02d" @(day dt))
+      \b (month-short-string dt)
+      \B (month-string dt)
+      \m (format "%02d" @(month dt))
+      \y (format "%02d" (mod @(year dt) 100))
+      \Y (format "%04d" @(year dt))
+      \H (format "%02d" (Maybe.from @(hours dt) 0))
+      \I (format "%02d" (mod (Maybe.from @(hours dt) 0) 12))
+      \p (if (> (Maybe.from @(hours dt) 0) 11) @"PM" @"AM")
+      \M (format "%02d" (Maybe.from @(minutes dt) 0))
+      \S (format "%02d" (Maybe.from @(seconds dt) 0))
+      \n (format "%09d" (Maybe.from @(nanoseconds dt) 0))
+      \z (match @(tz dt)
+          (Maybe.Just t)
+            (let [d @(Timezone.delta &t)
+                  s (* 60l 60l)]
+              (fmt "%s%02d%02d" (if (< d 0l) "-" "+") (Long.abs (/ d s)) (mod d s)))
+          (Maybe.Nothing) @"")
+      \Z @(Timezone.name &(Maybe.from @(tz dt) (Timezone.zero)))
+      \j (format "%03d" (yearday dt))
+      \U (format "%02d" (/ (+ (- (yearday dt) (isoweekday dt)) 7) 7))
+      \W (format "%02d" (/ (+ (- (yearday dt) (mod (isoweekday dt) 7)) 7) 7))
+      \c (strftime dt "%a %b %d %H:%M:%S %Y")
+      \x (isoformat dt)
+      \X (isotime dt)
+      (str c)
+    )
+  )
+
+  (defn format [s dt]
+    (let [idx (String.index-of s \%)
+          formatter (String.char-at s (Int.inc idx))]
+      (String.concat &[
+        (String.prefix-string s idx)
+        (format-for formatter dt)
+        (String.suffix-string s (+ idx 2))
+      ])))
+)
