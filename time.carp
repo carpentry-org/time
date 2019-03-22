@@ -27,22 +27,27 @@
   tz (Maybe Timezone),
 ])
 
+(register-type TM [
+  tm_sec Int,
+  tm_min Int,
+  tm_hour Int,
+  tm_mday Int,
+  tm_mon Int,
+  tm_year Int,
+  tm_wday Int,
+  tm_yday Int,
+  tm_isdst Int,
+  tm_zone String,
+  tm_gmtoff Long,
+])
+
 (defmodule Datetime
-  (register-type TM [
-    tm_sec Int,
-    tm_min Int,
-    tm_hour Int,
-    tm_mday Int,
-    tm_mon Int,
-    tm_year Int,
-    tm_wday Int,
-    tm_yday Int,
-    tm_isdst Int,
-    tm_zone String,
-    tm_gmtoff Long,
-  ])
+  (private create-time)
+  (hidden create-time)
   (register create-time (Fn [] (Ref TM)) "create_time")
 
+  (private MONTH-STRINGS)
+  (hidden MONTH-STRINGS)
   (def MONTH-STRINGS [
     @"",
     @"January",
@@ -58,6 +63,8 @@
     @"November",
     @"December"
   ])
+  (private WEEKDAY-STRINGS)
+  (hidden WEEKDAY-STRINGS)
   (def WEEKDAY-STRINGS [
     @"",
     @"Monday",
@@ -68,44 +75,93 @@
     @"Saturday",
     @"Sunday"
   ])
+  (private DAYS-BEFORE-MONTH)
+  (hidden DAYS-BEFORE-MONTH)
   (def DAYS-BEFORE-MONTH [0 0 31 59 90 120 151 181 212 243 273 304 334])
+  (private SECOND)
+  (hidden SECOND)
   (def SECOND 1)
+  (private MINUTE)
+  (hidden MINUTE)
   (def MINUTE (* 60 SECOND))
+  (private HOUR)
+  (hidden HOUR)
   (def HOUR (* 60 MINUTE))
+  (private DAY)
+  (hidden DAY)
   (def DAY (* 24 HOUR))
+  (private YEAR)
+  (hidden YEAR)
   (def YEAR (* 365 DAY))
 
+  (private is-leap)
+  (hidden is-leap)
   (defn is-leap [y] (and (= 0 (mod y 4)) (or (/= 0 (mod y 100)) (= 0 (mod y 400)))))
+  (private days-before-year)
+  (hidden days-before-year)
   (defn days-before-year [year]
     (let [y (Int.dec year)] (- (+ (* y 365) (+ (/ y 4) (/ y 400))) (/ y 100))))
+
+  (private days-before-month)
+  (hidden days-before-month)
   (defn days-before-month [year month]
     (if (and (> month 2) (is-leap year))
       (Int.inc @(Array.nth &DAYS-BEFORE-MONTH month))
       @(Array.nth &DAYS-BEFORE-MONTH month)))
+
+  (private ymd2ord)
+  (hidden ymd2ord)
   (defn ymd2ord [year month day]
     (+ (+ (days-before-year year) (days-before-month year month)) day))
+
+  (doc to-ordinal "converts a `Datetime` struct `dt` to a Gregorian ordinal.")
   (defn to-ordinal [dt] (ymd2ord @(year dt) @(month dt) @(day dt)))
+
+  (doc from-ordinal "Unimplemented!\n\nconverts a Gregorian ordinal `ord` to a `Datetime`.")
   (defn from-ordinal [ord] (Result.Error "TODO"))
 
+  (doc weekday "returns the weekday of the `Datetime` `dt` as a number in the range of `0` to `6`.")
   (defn weekday [dt] (mod (+ (to-ordinal dt) 6) 7))
-  (defn yearday [dt] (+ @(Array.nth &DAYS-BEFORE-MONTH @(month dt)) @(day dt)))
+
+  (doc isoweekdday "returns the ISO representation of weekday of the `Datetime`
+`dt` as a number in the range of `1` to `7`.")
   (defn isoweekday [dt] (+ (weekday dt) 1))
+
+  (doc yearday "returns the day of the year of the `Datetime` `dt` as a number
+in the range of `1` to `365` or `366`, depending on whether it’s a leap year.")
+  (defn yearday [dt] (+ @(Array.nth &DAYS-BEFORE-MONTH @(month dt)) @(day dt)))
+
+  (doc weekday-string "returns the name of the weekday of the `Datetime` `dt`.")
   (defn weekday-string [dt]
     (let [modord (mod (to-ordinal dt) 7)]
       @(Array.nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord))))
+
+  (doc weekday-short-string "returns the abbreviated name of the weekday of the
+`Datetime` `dt`.")
   (defn weekday-short-string [dt]
     (let [modord (mod (to-ordinal dt) 7)]
       (prefix-string (Array.nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord)) 3)))
+
+  (doc month-string "returns the name of the month of the `Datetime` `dt`.")
   (defn month-string [dt] @(Array.nth &MONTH-STRINGS @(month dt)))
+
+  (doc month-string "returns the abbreviated name of the month of the
+`Datetime` `dt`.")
   (defn month-short-string [dt]
     (prefix-string (Array.nth &MONTH-STRINGS @(month dt)) 3))
+
+  (doc leap? "checks whether the `Datetime` `dt` is a leap year.")
   (defn leap? [dt] (is-leap @(year dt)))
 
+  (private for-year)
+  (hidden for-year)
   (defn for-year [years a b]
     (Array.reduce &(fn [acc x] (if (is-leap @x) (+ a acc) (+ b acc)))
                   0
                   years))
 
+  (private to-unix)
+  (hidden to-unix)
   (defn to-unix [y m d hh mm ss delta]
     (let [yy (for-year &(Array.range 1970 y 1) 366 365)]
       (+ (* yy DAY)
@@ -116,12 +172,18 @@
                      (+ (Long.to-int delta)
                         ss))))))))
 
+  (doc to-unix-timestamp "returns the representation of the `Datetime` `dt` as
+a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
+1970.")
   (defn to-unix-timestamp [dt]
     (let [tz (Maybe.from @(tz dt) (Timezone.zero))]
       (to-unix @(year dt) @(month dt) @(day dt) (Maybe.from @(hours dt) 0)
                (Maybe.from @(minutes dt) 0) (Maybe.from @(seconds dt) 0)
                @(Timezone.delta &tz))))
 
+  (doc from-unix-timestamp "returns the `Datetime` equivalent to the UNIX
+timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
+1970.")
   (defn from-unix-timestamp [ts]
     (let [y (/ ts YEAR)
           ld (Int.dec (for-year &(Array.range 1970 (+ y 1971) 1) 1 0))
@@ -145,18 +207,29 @@
             (Maybe.Nothing) (Maybe.Nothing))))
 
   ; TODO should this be case-insensitive?
+  (doc utc? "checks whether the timezone of the `Datetime` `dt` is UTC. It will
+also return true if the timezone is not set.")
   (defn utc? [dt]
     (or (Maybe.nothing? (tz dt))
         (= &Timezone.utc &(Maybe.from @(tz dt) (Timezone.zero)))))
 
+  (doc isoformat "returns the ISO format for the `Datetime` `dt`.
+
+The ISO format is of the form `YYYY-MM-DD`. The time value is not represented.")
   (defn isoformat [dt]
     (fmt "%04d-%02d-%02d" @(year dt) @(month dt) @(day dt)))
 
+  (doc isoformat "returns the ISO time format for the `Datetime` `dt`.
+
+The ISO format is of the form `HH:MM:SS`. The date value is not represented.")
   (defn isotime [dt]
     (fmt "%02d:%02d:%02d" (Maybe.from @(hours dt) 0)
                           (Maybe.from @(minutes dt) 0)
                           (Maybe.from @(seconds dt) 0)))
 
+  (doc now "returns the `Datetime` representing the current time.
+
+All of the time information is obtained from the operating system directly.")
   (defn now []
     (let [t (System.nanotime)
           ct (create-time)]
@@ -171,6 +244,18 @@
 
   (register format (Fn [(Ref String) (Ref Datetime)] String))
 
+  (doc strftime "formats the `Datetime` `dt` according to the string provided
+in `s`. The formatting options mimic [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
+
+You can alternatively use the `fmt` macro or `format` function, but you’ll only
+be able to use one of the formatting properties there. Thus this function is
+provided as a convenience for fine-grained string tweaking.
+
+Example:
+
+```
+&(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")
+```")
   (defn strftime [dt s]
     (let [strings (String.split-by s &[\%])
           ln (Int.dec (Array.length &strings))
@@ -186,6 +271,8 @@
                                  &strings
                                  &rng))))
 
+  (private format-for)
+  (hidden format-for)
   (defn format-for [c dt]
     (case c
       \a (weekday-short-string dt)
@@ -207,7 +294,8 @@
           (Maybe.Just t)
             (let [d @(Timezone.delta &t)
                   s (* 60l 60l)]
-              (fmt "%s%02d%02d" (if (< d 0l) "-" "+") (Long.abs (/ d s)) (mod d s)))
+              (fmt "%s%02d%02d" (if (< d 0l) "-" "+") (Long.abs (/ d s))
+                                (mod d s)))
           (Maybe.Nothing) @"")
       \Z @(Timezone.name &(Maybe.from @(tz dt) (Timezone.zero)))
       \j (format "%03d" (yearday dt))
@@ -220,6 +308,9 @@
     )
   )
 
+  (doc format "The interface implementation of `format` for `Datetime` values.
+
+It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).")
   (defn format [s dt]
     (let [idx (String.index-of s \%)
           formatter (String.char-at s (Int.inc idx))]

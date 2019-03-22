@@ -1,0 +1,1113 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="http://github.com/carp-lang/Carp">
+                    <img src="logo.png">
+                </a>
+                <div class="title">
+                    time
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="Datetime.html">
+                                Datetime
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <h1>
+                Datetime
+            </h1>
+            <div class="binder">
+                <a class="anchor" href="#copy">
+                    <h3 id="copy">
+                        copy
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#day">
+                    <h3 id="day">
+                        day
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] &amp;Int)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#format">
+                    <h3 id="format">
+                        format
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [&amp;String, (Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (format s dt)
+                </pre>
+                <p class="doc">
+                    <p>The interface implementation of <code>format</code> for <code>Datetime</code> values.</p>
+<p>It mimics <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C interface</a>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#from-ordinal">
+                    <h3 id="from-ordinal">
+                        from-ordinal
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [a] (Result b &amp;String))
+                </p>
+                <pre class="args">
+                    (from-ordinal ord)
+                </pre>
+                <p class="doc">
+                    <p>Unimplemented!\n\nconverts a Gregorian ordinal <code>ord</code> to a <code>Datetime</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#from-unix-timestamp">
+                    <h3 id="from-unix-timestamp">
+                        from-unix-timestamp
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [Int] Datetime)
+                </p>
+                <pre class="args">
+                    (from-unix-timestamp ts)
+                </pre>
+                <p class="doc">
+                    <p>returns the <code>Datetime</code> equivalent to the UNIX
+timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of January,
+1970.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#hours">
+                    <h3 id="hours">
+                        hours
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#init">
+                    <h3 id="init">
+                        init
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Int, Int, Int, (Maybe Int), (Maybe Int), (Maybe Int), (Maybe Int), (Maybe Timezone)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#isoformat">
+                    <h3 id="isoformat">
+                        isoformat
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (isoformat dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the ISO time format for the <code>Datetime</code> <code>dt</code>.</p>
+<p>The ISO format is of the form <code>HH:MM:SS</code>. The date value is not represented.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#isotime">
+                    <h3 id="isotime">
+                        isotime
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (isotime dt)
+                </pre>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#isoweekday">
+                    <h3 id="isoweekday">
+                        isoweekday
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Int)
+                </p>
+                <pre class="args">
+                    (isoweekday dt)
+                </pre>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#isoweekdday">
+                    <h3 id="isoweekdday">
+                        isoweekdday
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    a
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>returns the ISO representation of weekday of the <code>Datetime</code>
+<code>dt</code> as a number in the range of <code>1</code> to <code>7</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#leap?">
+                    <h3 id="leap?">
+                        leap?
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Bool)
+                </p>
+                <pre class="args">
+                    (leap? dt)
+                </pre>
+                <p class="doc">
+                    <p>checks whether the <code>Datetime</code> <code>dt</code> is a leap year.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#minutes">
+                    <h3 id="minutes">
+                        minutes
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#month">
+                    <h3 id="month">
+                        month
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] &amp;Int)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#month-short-string">
+                    <h3 id="month-short-string">
+                        month-short-string
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (month-short-string dt)
+                </pre>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#month-string">
+                    <h3 id="month-string">
+                        month-string
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (month-string dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the abbreviated name of the month of the
+<code>Datetime</code> <code>dt</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#nanoseconds">
+                    <h3 id="nanoseconds">
+                        nanoseconds
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#now">
+                    <h3 id="now">
+                        now
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [] Datetime)
+                </p>
+                <pre class="args">
+                    (now)
+                </pre>
+                <p class="doc">
+                    <p>returns the <code>Datetime</code> representing the current time.</p>
+<p>All of the time information is obtained from the operating system directly.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#prn">
+                    <h3 id="prn">
+                        prn
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#seconds">
+                    <h3 id="seconds">
+                        seconds
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-day">
+                    <h3 id="set-day">
+                        set-day
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, Int] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-day!">
+                    <h3 id="set-day!">
+                        set-day!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), Int] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-hours">
+                    <h3 id="set-hours">
+                        set-hours
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Maybe Int)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-hours!">
+                    <h3 id="set-hours!">
+                        set-hours!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), (Maybe Int)] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-minutes">
+                    <h3 id="set-minutes">
+                        set-minutes
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Maybe Int)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-minutes!">
+                    <h3 id="set-minutes!">
+                        set-minutes!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), (Maybe Int)] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-month">
+                    <h3 id="set-month">
+                        set-month
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, Int] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-month!">
+                    <h3 id="set-month!">
+                        set-month!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), Int] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-nanoseconds">
+                    <h3 id="set-nanoseconds">
+                        set-nanoseconds
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Maybe Int)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-nanoseconds!">
+                    <h3 id="set-nanoseconds!">
+                        set-nanoseconds!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), (Maybe Int)] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-seconds">
+                    <h3 id="set-seconds">
+                        set-seconds
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Maybe Int)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-seconds!">
+                    <h3 id="set-seconds!">
+                        set-seconds!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), (Maybe Int)] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-tz">
+                    <h3 id="set-tz">
+                        set-tz
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Maybe Timezone)] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-tz!">
+                    <h3 id="set-tz!">
+                        set-tz!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), (Maybe Timezone)] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-year">
+                    <h3 id="set-year">
+                        set-year
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, Int] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#set-year!">
+                    <h3 id="set-year!">
+                        set-year!
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime), Int] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#str">
+                    <h3 id="str">
+                        str
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#strftime">
+                    <h3 id="strftime">
+                        strftime
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [a, &amp;String] String)
+                </p>
+                <pre class="args">
+                    (strftime dt s)
+                </pre>
+                <p class="doc">
+                    <p>formats the <code>Datetime</code> <code>dt</code> according to the string provided
+in <code>s</code>. The formatting options mimic <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C interface</a>.</p>
+<p>You can alternatively use the <code>fmt</code> macro or <code>format</code> function, but you’ll only
+be able to use one of the formatting properties there. Thus this function is
+provided as a convenience for fine-grained string tweaking.</p>
+<p>Example:</p>
+<pre><code>&amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#to-ordinal">
+                    <h3 id="to-ordinal">
+                        to-ordinal
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Int)
+                </p>
+                <pre class="args">
+                    (to-ordinal dt)
+                </pre>
+                <p class="doc">
+                    <p>converts a <code>Datetime</code> struct <code>dt</code> to a Gregorian ordinal.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#to-unix-timestamp">
+                    <h3 id="to-unix-timestamp">
+                        to-unix-timestamp
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Int)
+                </p>
+                <pre class="args">
+                    (to-unix-timestamp dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the representation of the <code>Datetime</code> <code>dt</code> as
+a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
+1970.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#tz">
+                    <h3 id="tz">
+                        tz
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] (Ref (Maybe Timezone)))
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-day">
+                    <h3 id="update-day">
+                        update-day
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [Int] Int))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-hours">
+                    <h3 id="update-hours">
+                        update-hours
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-minutes">
+                    <h3 id="update-minutes">
+                        update-minutes
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-month">
+                    <h3 id="update-month">
+                        update-month
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [Int] Int))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-nanoseconds">
+                    <h3 id="update-nanoseconds">
+                        update-nanoseconds
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-seconds">
+                    <h3 id="update-seconds">
+                        update-seconds
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-tz">
+                    <h3 id="update-tz">
+                        update-tz
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [(Maybe Timezone)] (Maybe Timezone)))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#update-year">
+                    <h3 id="update-year">
+                        update-year
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [Datetime, (Ref (λ [Int] Int))] Datetime)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#utc?">
+                    <h3 id="utc?">
+                        utc?
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Bool)
+                </p>
+                <pre class="args">
+                    (utc? dt)
+                </pre>
+                <p class="doc">
+                    <p>checks whether the timezone of the <code>Datetime</code> <code>dt</code> is UTC. It will
+also return true if the timezone is not set.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#weekday">
+                    <h3 id="weekday">
+                        weekday
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Int)
+                </p>
+                <pre class="args">
+                    (weekday dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the weekday of the <code>Datetime</code> <code>dt</code> as a number in the range of <code>0</code> to <code>6</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#weekday-short-string">
+                    <h3 id="weekday-short-string">
+                        weekday-short-string
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (weekday-short-string dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the abbreviated name of the weekday of the
+<code>Datetime</code> <code>dt</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#weekday-string">
+                    <h3 id="weekday-string">
+                        weekday-string
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] String)
+                </p>
+                <pre class="args">
+                    (weekday-string dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the name of the weekday of the <code>Datetime</code> <code>dt</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#year">
+                    <h3 id="year">
+                        year
+                    </h3>
+                </a>
+                <div class="description">
+                    instantiate
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] &amp;Int)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#yearday">
+                    <h3 id="yearday">
+                        yearday
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [(Ref Datetime)] Int)
+                </p>
+                <pre class="args">
+                    (yearday dt)
+                </pre>
+                <p class="doc">
+                    <p>returns the day of the year of the <code>Datetime</code> <code>dt</code> as a number
+in the range of <code>1</code> to <code>365</code> or <code>366</code>, depending on whether it’s a leap year.</p>
+
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
