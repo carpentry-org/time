@@ -48,6 +48,26 @@
                 </p>
             </div>
             <div class="binder">
+                <a class="anchor" href="#date">
+                    <h3 id="date">
+                        date
+                    </h3>
+                </a>
+                <div class="description">
+                    defn
+                </div>
+                <p class="sig">
+                    (λ [Int, Int, Int] Datetime)
+                </p>
+                <pre class="args">
+                    (date y m d)
+                </pre>
+                <p class="doc">
+                    <p>create a <code>Datetime</code> from a year <code>y</code>, month <code>m</code>, and day <code>d</code>.</p>
+
+                </p>
+            </div>
+            <div class="binder">
                 <a class="anchor" href="#day">
                     <h3 id="day">
                         day
@@ -97,13 +117,13 @@
                     defn
                 </div>
                 <p class="sig">
-                    (λ [a] (Result b &amp;String))
+                    (λ [a] Datetime)
                 </p>
                 <pre class="args">
                     (from-ordinal ord)
                 </pre>
                 <p class="doc">
-                    <p>Unimplemented!\n\nconverts a Gregorian ordinal <code>ord</code> to a <code>Datetime</code>.</p>
+                    <p>converts a Gregorian ordinal <code>ord</code> to a <code>Datetime</code>.</p>
 
                 </p>
             </div>

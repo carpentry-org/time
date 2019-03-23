@@ -75,6 +75,9 @@
     @"Saturday",
     @"Sunday"
   ])
+  (private DAYS-IN-MONTH)
+  (hidden DAYS-IN-MONTH)
+  (def DAYS-IN-MONTH [0 31 28 31 30 31 30 31 31 30 31 30 31])
   (private DAYS-BEFORE-MONTH)
   (hidden DAYS-BEFORE-MONTH)
   (def DAYS-BEFORE-MONTH [0 0 31 59 90 120 151 181 212 243 273 304 334])
@@ -102,6 +105,16 @@
   (defn days-before-year [year]
     (let [y (Int.dec year)] (- (+ (* y 365) (+ (/ y 4) (/ y 400))) (/ y 100))))
 
+  (private DI400Y)
+  (hidden DI400Y)
+  (def DI400Y (days-before-year 401))
+  (private DI100Y)
+  (hidden DI100Y)
+  (def DI100Y (days-before-year 101))
+  (private DI4Y)
+  (hidden DI4Y)
+  (def DI4Y (days-before-year 5))
+
   (private days-before-month)
   (hidden days-before-month)
   (defn days-before-month [year month]
@@ -109,16 +122,48 @@
       (Int.inc @(Array.nth &DAYS-BEFORE-MONTH month))
       @(Array.nth &DAYS-BEFORE-MONTH month)))
 
+  (private days-in-month)
+  (hidden days-in-month)
+  (defn days-in-month [year month]
+    (if (and (= month 2) (is-leap year))
+      29
+      @(Array.nth &DAYS-IN-MONTH month)))
+
   (private ymd2ord)
   (hidden ymd2ord)
   (defn ymd2ord [year month day]
     (+ (+ (days-before-year year) (days-before-month year month)) day))
 
+  (doc date "create a `Datetime` from a year `y`, month `m`, and day `d`.")
+  (defn date [y m d]
+    (init y m d (Maybe.Nothing) (Maybe.Nothing) (Maybe.Nothing) (Maybe.Nothing)
+          (Maybe.Nothing)))
+
   (doc to-ordinal "converts a `Datetime` struct `dt` to a Gregorian ordinal.")
   (defn to-ordinal [dt] (ymd2ord @(year dt) @(month dt) @(day dt)))
 
-  (doc from-ordinal "Unimplemented!\n\nconverts a Gregorian ordinal `ord` to a `Datetime`.")
-  (defn from-ordinal [ord] (Result.Error "TODO"))
+  (doc from-ordinal "converts a Gregorian ordinal `ord` to a `Datetime`.")
+  (defn from-ordinal [ord]
+    (let [ord (- ord 1)
+          n400 (/ ord DI400Y)
+          ord- (mod ord DI400Y)
+          year- (+ (* n400 400) 1)
+          n100 (/ ord- DI100Y)
+          ord-- (mod ord- DI100Y)
+          n4 (/ ord-- DI4Y)
+          ord--- (mod ord-- DI4Y)
+          n1 (/ ord--- 365)
+          n (mod ord--- 365)
+          year (+ year- (+ (* n100 100) (+ (* n4 4) n1)))]
+        (if (or (= n1 4) (= n100 4))
+          (date (- year 1) 12 31)
+          (let [month (Int.bit-shift-right (+ n 50) 5)
+                prec (days-before-month year month)]
+            (if (> prec n)
+              (let [month (- month 1)
+                    prec (- prec (days-in-month year month))]
+                (date year month (+ (- n prec) 1)))
+              (date year month (+ (- n prec) 1)))))))
 
   (doc weekday "returns the weekday of the `Datetime` `dt` as a number in the range of `0` to `6`.")
   (defn weekday [dt] (mod (+ (to-ordinal dt) 6) 7))
