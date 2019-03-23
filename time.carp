@@ -42,6 +42,23 @@
 ])
 
 (defmodule Datetime
+  (doc copy "copies a `Datetime`. This will also copy the timezone contained in
+it.")
+  (doc day "gets the `day` property of the datetime, i.e. the day of the
+month.")
+  (doc hours "gets the `hours` property of the datetime, i.e. the hours of the
+day.
+
+It is optional and will thus be returned as a `Maybe`.")
+  (doc init "creates a Datetime; all properties except for the date properties
+are optional.")
+  (doc minutes "gets the `minutes` property of the datetime, i.e. the minutes
+of the day.
+
+It is optional and will thus be returned as a `Maybe`.")
+  (doc month "gets the `month` property of the datetime, i.e. the month of the
+year.")
+
   (private create-time)
   (hidden create-time)
   (register create-time (Fn [] (Ref TM)) "create_time")
@@ -168,7 +185,7 @@
   (doc weekday "returns the weekday of the `Datetime` `dt` as a number in the range of `0` to `6`.")
   (defn weekday [dt] (mod (+ (to-ordinal dt) 6) 7))
 
-  (doc isoweekdday "returns the ISO representation of weekday of the `Datetime`
+  (doc isoweekday "returns the ISO representation of weekday of the `Datetime`
 `dt` as a number in the range of `1` to `7`.")
   (defn isoweekday [dt] (+ (weekday dt) 1))
 
@@ -190,7 +207,7 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (doc month-string "returns the name of the month of the `Datetime` `dt`.")
   (defn month-string [dt] @(Array.nth &MONTH-STRINGS @(month dt)))
 
-  (doc month-string "returns the abbreviated name of the month of the
+  (doc month-short-string "returns the abbreviated name of the month of the
 `Datetime` `dt`.")
   (defn month-short-string [dt]
     (prefix-string (Array.nth &MONTH-STRINGS @(month dt)) 3))
@@ -264,7 +281,7 @@ The ISO format is of the form `YYYY-MM-DD`. The time value is not represented.")
   (defn isoformat [dt]
     (fmt "%04d-%02d-%02d" @(year dt) @(month dt) @(day dt)))
 
-  (doc isoformat "returns the ISO time format for the `Datetime` `dt`.
+  (doc isotime "returns the ISO time format for the `Datetime` `dt`.
 
 The ISO format is of the form `HH:MM:SS`. The date value is not represented.")
   (defn isotime [dt]

@@ -44,7 +44,9 @@
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>copies a <code>Datetime</code>. This will also copy the timezone contained in
+it.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -83,7 +85,9 @@
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>gets the <code>day</code> property of the datetime, i.e. the day of the
+month.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -165,7 +169,10 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>gets the <code>hours</code> property of the datetime, i.e. the hours of the
+day.</p>
+<p>It is optional and will thus be returned as a <code>Maybe</code>.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -184,7 +191,9 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>creates a Datetime; all properties except for the date properties
+are optional.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -203,8 +212,8 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     (isoformat dt)
                 </pre>
                 <p class="doc">
-                    <p>returns the ISO time format for the <code>Datetime</code> <code>dt</code>.</p>
-<p>The ISO format is of the form <code>HH:MM:SS</code>. The date value is not represented.</p>
+                    <p>returns the ISO format for the <code>Datetime</code> <code>dt</code>.</p>
+<p>The ISO format is of the form <code>YYYY-MM-DD</code>. The time value is not represented.</p>
 
                 </p>
             </div>
@@ -224,7 +233,9 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     (isotime dt)
                 </pre>
                 <p class="doc">
-                    
+                    <p>returns the ISO time format for the <code>Datetime</code> <code>dt</code>.</p>
+<p>The ISO format is of the form <code>HH:MM:SS</code>. The date value is not represented.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -242,25 +253,6 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                 <pre class="args">
                     (isoweekday dt)
                 </pre>
-                <p class="doc">
-                    
-                </p>
-            </div>
-            <div class="binder">
-                <a class="anchor" href="#isoweekdday">
-                    <h3 id="isoweekdday">
-                        isoweekdday
-                    </h3>
-                </a>
-                <div class="description">
-                    external
-                </div>
-                <p class="sig">
-                    a
-                </p>
-                <span>
-                    
-                </span>
                 <p class="doc">
                     <p>returns the ISO representation of weekday of the <code>Datetime</code>
 <code>dt</code> as a number in the range of <code>1</code> to <code>7</code>.</p>
@@ -303,7 +295,10 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>gets the <code>minutes</code> property of the datetime, i.e. the minutes
+of the day.</p>
+<p>It is optional and will thus be returned as a <code>Maybe</code>.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -322,7 +317,9 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>gets the <code>month</code> property of the datetime, i.e. the month of the
+year.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -341,7 +338,9 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     (month-short-string dt)
                 </pre>
                 <p class="doc">
-                    
+                    <p>returns the abbreviated name of the month of the
+<code>Datetime</code> <code>dt</code>.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -360,8 +359,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     (month-string dt)
                 </pre>
                 <p class="doc">
-                    <p>returns the abbreviated name of the month of the
-<code>Datetime</code> <code>dt</code>.</p>
+                    <p>returns the name of the month of the <code>Datetime</code> <code>dt</code>.</p>
 
                 </p>
             </div>
