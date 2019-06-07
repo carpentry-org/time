@@ -33,7 +33,7 @@
 <code>Datetime</code> type can be converted from and to various other types and formats,
 and formatted using <code>strftime</code>, which mimics <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
 <p>Example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.0.1&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.0.2&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
