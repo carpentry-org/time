@@ -57,20 +57,6 @@ Example:
 (defmodule Datetime
   (doc copy "copies a `Datetime`. This will also copy the timezone contained in
 it.")
-  (doc day "gets the `day` property of the datetime, i.e. the day of the
-month.")
-  (doc hours "gets the `hours` property of the datetime, i.e. the hours of the
-day.
-
-It is optional and will thus be returned as a `Maybe`.")
-  (doc init "creates a Datetime; all properties except for the date properties
-are optional.")
-  (doc minutes "gets the `minutes` property of the datetime, i.e. the minutes
-of the day.
-
-It is optional and will thus be returned as a `Maybe`.")
-  (doc month "gets the `month` property of the datetime, i.e. the month of the
-year.")
 
   (private create-time)
   (hidden create-time)
