@@ -5,5 +5,7 @@
 (Project.config "docs-logo" "")
 (Project.config "docs-url" "https://github.com/carpentry-org/time")
 (Project.config "docs-styling" "style.css")
+(Project.config "docs-generate-index" false)
 
 (save-docs Datetime)
+(quit)

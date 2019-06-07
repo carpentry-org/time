@@ -41,6 +41,19 @@
   tm_gmtoff Long,
 ])
 
+(doc Datetime "This module is primarily concerned with date and time. The
+`Datetime` type can be converted from and to various other types and formats,
+and formatted using `strftime`, which mimics [the C formatting API](http://www.cplusplus.com/reference/ctime/strftime/).
+
+Example:
+
+```
+(load \"git@github.com:carpentry-org/time.carp@0.0.1\")
+
+(defn main []
+  (println* &(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
+```")
+
 (defmodule Datetime
   (doc copy "copies a `Datetime`. This will also copy the timezone contained in
 it.")
@@ -255,7 +268,7 @@ timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
                                 0
                                 &DAYS-BEFORE-MONTH))
           mdays (get-m-until d)
-          m (Array.index-of &DAYS-BEFORE-MONTH &mdays)
+          m (Maybe.unsafe-from (Array.index-of &DAYS-BEFORE-MONTH &mdays))
           nd (- d mdays)
           tmpy (* y (* 365 24))
           tmpd (* (+ nd (+ ld mdays)) 24)

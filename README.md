@@ -15,7 +15,7 @@ friction datatype; this means that it should be relatively easy to create,
 modify, and convert to other types!
 
 ```clojure
-(load "time.carp")
+(load "git@github.com:carpentry-org/time.carp@0.0.1")
 
 (defn main []
   (println* &(Datetime.strftime &(Datetime.now) "%Y-%m-%d %I:%M:%S.%n %p %z")))
