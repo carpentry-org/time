@@ -380,4 +380,36 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
         (format-for formatter dt)
         (String.suffix-string s (+ idx 2))
       ])))
+
+  (doc = "is defined as the equality of all members of `a` and `b`, even the
+optional ones.")
+  (defn = [a b]
+    (and*
+      (= (year a) (year b))
+      (= (day a) (day b))
+      (= (hours a) (hours b))
+      (= (minutes a) (minutes b))
+      (= (seconds a) (seconds b))
+      (= (nanoseconds a) (nanoseconds b))
+      (= &(Maybe.from @(tz a) @&Timezone.utc) &(Maybe.from @(tz b) @&Timezone.utc))))
+
+  (doc > "is defined as the timezone-unaware comparison of `a` and `b`.")
+  (defn > [a b]
+    (or*
+      (> @(year a) @(year b))
+      (> @(day a) @(day b))
+      (> (Maybe.from @(hours a) 0) (Maybe.from @(hours b) 0))
+      (> (Maybe.from @(minutes a) 0) (Maybe.from @(minutes b) 0))
+      (> (Maybe.from @(seconds a) 0) (Maybe.from @(seconds b) 0))
+      (> (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
+
+  (doc < "is defined as the timezone-unaware comparison of `a` and `b`.")
+  (defn < [a b]
+    (or*
+      (< @(year a) @(year b))
+      (< @(day a) @(day b))
+      (< (Maybe.from @(hours a) 0) (Maybe.from @(hours b) 0))
+      (< (Maybe.from @(minutes a) 0) (Maybe.from @(minutes b) 0))
+      (< (Maybe.from @(seconds a) 0) (Maybe.from @(seconds b) 0))
+      (< (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
 )
