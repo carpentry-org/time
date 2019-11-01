@@ -135,15 +135,15 @@ it.")
   (hidden days-before-month)
   (defn days-before-month [year month]
     (if (and (> month 2) (is-leap year))
-      (Int.inc @(Array.nth &DAYS-BEFORE-MONTH month))
-      @(Array.nth &DAYS-BEFORE-MONTH month)))
+      (Int.inc @(Array.unsafe-nth &DAYS-BEFORE-MONTH month))
+      @(Array.unsafe-nth &DAYS-BEFORE-MONTH month)))
 
   (private days-in-month)
   (hidden days-in-month)
   (defn days-in-month [year month]
     (if (and (= month 2) (is-leap year))
       29
-      @(Array.nth &DAYS-IN-MONTH month)))
+      @(Array.unsafe-nth &DAYS-IN-MONTH month)))
 
   (private ymd2ord)
   (hidden ymd2ord)
@@ -190,26 +190,26 @@ it.")
 
   (doc yearday "returns the day of the year of the `Datetime` `dt` as a number
 in the range of `1` to `365` or `366`, depending on whether it’s a leap year.")
-  (defn yearday [dt] (+ @(Array.nth &DAYS-BEFORE-MONTH @(month dt)) @(day dt)))
+  (defn yearday [dt] (+ @(Array.unsafe-nth &DAYS-BEFORE-MONTH @(month dt)) @(day dt)))
 
   (doc weekday-string "returns the name of the weekday of the `Datetime` `dt`.")
   (defn weekday-string [dt]
     (let [modord (mod (to-ordinal dt) 7)]
-      @(Array.nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord))))
+      @(Array.unsafe-nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord))))
 
   (doc weekday-short-string "returns the abbreviated name of the weekday of the
 `Datetime` `dt`.")
   (defn weekday-short-string [dt]
     (let [modord (mod (to-ordinal dt) 7)]
-      (prefix-string (Array.nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord)) 3)))
+      (prefix-string (Array.unsafe-nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord)) 3)))
 
   (doc month-string "returns the name of the month of the `Datetime` `dt`.")
-  (defn month-string [dt] @(Array.nth &MONTH-STRINGS @(month dt)))
+  (defn month-string [dt] @(Array.unsafe-nth &MONTH-STRINGS @(month dt)))
 
   (doc month-short-string "returns the abbreviated name of the month of the
 `Datetime` `dt`.")
   (defn month-short-string [dt]
-    (prefix-string (Array.nth &MONTH-STRINGS @(month dt)) 3))
+    (prefix-string (Array.unsafe-nth &MONTH-STRINGS @(month dt)) 3))
 
   (doc leap? "checks whether the `Datetime` `dt` is a leap year.")
   (defn leap? [dt] (is-leap @(year dt)))
@@ -226,7 +226,7 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (defn to-unix [y m d hh mm ss delta]
     (let [yy (for-year &(Array.range 1970 y 1) 366 365)]
       (+ (* yy DAY)
-         (+ (* @(Array.nth &DAYS-BEFORE-MONTH m) DAY)
+         (+ (* @(Array.unsafe-nth &DAYS-BEFORE-MONTH m) DAY)
             (+ (* (Int.dec d) DAY)
                (+ (* hh HOUR)
                   (+ (* mm MINUTE)
