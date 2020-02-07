@@ -214,6 +214,33 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (doc leap? "checks whether the `Datetime` `dt` is a leap year.")
   (defn leap? [dt] (is-leap @(year dt)))
 
+  (doc add-seconds "adds a number of seconds `n` to a `Datetime`.")
+  (defn add-seconds [d n]
+    (let-do [nd @d
+             s (Maybe.from @(seconds d) 0)
+             a (+ s n)]
+      (set-seconds! &nd (Maybe.Just (Int.mod a 60)))
+      (if (< a 60)
+        nd
+        (let-do [m (/ a 60)
+                 dm (Maybe.from @(minutes d) 0)
+                 ma (+ m dm)]
+          (set-minutes! &nd (Maybe.Just (Int.mod ma 60)))
+          (if (< ma 60)
+            nd
+            (let-do [h (/ ma 60)
+                     dh (Maybe.from @(hours d) 0)
+                     ha (+ h dh)]
+              (set-hours! &nd (Maybe.Just (Int.mod ha 24)))
+              (if (< ha 24)
+                nd
+                (let-do [ord (to-ordinal d)
+                         nnd (from-ordinal (+ ord (/ ha 24)))]
+                  (set-day! &nd @(day &nnd))
+                  (set-month! &nd @(month &nnd))
+                  (set-year! &nd @(year &nnd))
+                  nd))))))))
+
   (private for-year)
   (hidden for-year)
   (defn for-year [years a b]
