@@ -201,7 +201,7 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
 `Datetime` `dt`.")
   (defn weekday-short-string [dt]
     (let [modord (mod (to-ordinal dt) 7)]
-      (prefix-string (Array.unsafe-nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord)) 3)))
+      (prefix (Array.unsafe-nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord)) 3)))
 
   (doc month-string "returns the name of the month of the `Datetime` `dt`.")
   (defn month-string [dt] @(Array.unsafe-nth &MONTH-STRINGS @(month dt)))
@@ -209,7 +209,7 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (doc month-short-string "returns the abbreviated name of the month of the
 `Datetime` `dt`.")
   (defn month-short-string [dt]
-    (prefix-string (Array.unsafe-nth &MONTH-STRINGS @(month dt)) 3))
+    (prefix (Array.unsafe-nth &MONTH-STRINGS @(month dt)) 3))
 
   (doc leap? "checks whether the `Datetime` `dt` is a leap year.")
   (defn leap? [dt] (is-leap @(year dt)))
@@ -403,9 +403,9 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
     (let [idx (String.index-of s \%)
           formatter (String.char-at s (Int.inc idx))]
       (String.concat &[
-        (String.prefix-string s idx)
+        (String.prefix s idx)
         (format-for formatter dt)
-        (String.suffix-string s (+ idx 2))
+        (String.suffix s (+ idx 2))
       ])))
 
   (doc = "is defined as the equality of all members of `a` and `b`, even the
