@@ -33,7 +33,7 @@
 <code>Datetime</code> type can be converted from and to various other types and formats,
 and formatted using <code>strftime</code>, which mimics <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
 <p>Example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.0.2&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.0.6&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
@@ -50,7 +50,7 @@ and formatted using <code>strftime</code>, which mimics <a href="http://www.cplu
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Ref Datetime)] Bool)
+                    (λ [(Ref Datetime a), (Ref Datetime b)] Bool)
                 </p>
                 <pre class="args">
                     (&lt; a b)
@@ -70,7 +70,7 @@ and formatted using <code>strftime</code>, which mimics <a href="http://www.cplu
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Ref Datetime)] Bool)
+                    (λ [(Ref Datetime a), (Ref Datetime a)] Bool)
                 </p>
                 <pre class="args">
                     (= a b)
@@ -91,7 +91,7 @@ optional ones.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Ref Datetime)] Bool)
+                    (λ [(Ref Datetime a), (Ref Datetime b)] Bool)
                 </p>
                 <pre class="args">
                     (&gt; a b)
@@ -111,7 +111,7 @@ optional ones.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), Int] Datetime)
+                    (λ [(Ref Datetime a), Int] Datetime)
                 </p>
                 <pre class="args">
                     (add-seconds d n)
@@ -131,7 +131,7 @@ optional ones.</p>
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Datetime)
+                    (λ [(Ref Datetime a)] Datetime)
                 </p>
                 <span>
                     
@@ -172,7 +172,7 @@ it.</p>
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] &amp;Int)
+                    (λ [(Ref Datetime a)] (Ref Int a))
                 </p>
                 <span>
                     
@@ -192,7 +192,7 @@ it.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [&amp;String, (Ref Datetime)] String)
+                    (λ [(Ref String a), (Ref Datetime b)] String)
                 </p>
                 <pre class="args">
                     (format s dt)
@@ -255,7 +255,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                    (λ [(Ref Datetime a)] (Ref (Maybe Int) a))
                 </p>
                 <span>
                     
@@ -295,7 +295,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <pre class="args">
                     (isoformat dt)
@@ -316,7 +316,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <pre class="args">
                     (isotime dt)
@@ -337,7 +337,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Int)
+                    (λ [(Ref Datetime a)] Int)
                 </p>
                 <pre class="args">
                     (isoweekday dt)
@@ -358,7 +358,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Bool)
+                    (λ [(Ref Datetime a)] Bool)
                 </p>
                 <pre class="args">
                     (leap? dt)
@@ -378,7 +378,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                    (λ [(Ref Datetime a)] (Ref (Maybe Int) a))
                 </p>
                 <span>
                     
@@ -398,7 +398,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] &amp;Int)
+                    (λ [(Ref Datetime a)] (Ref Int a))
                 </p>
                 <span>
                     
@@ -418,7 +418,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <pre class="args">
                     (month-short-string dt)
@@ -439,7 +439,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <pre class="args">
                     (month-string dt)
@@ -459,7 +459,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                    (λ [(Ref Datetime a)] (Ref (Maybe Int) a))
                 </p>
                 <span>
                     
@@ -500,7 +500,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <span>
                     
@@ -520,7 +520,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] (Ref (Maybe Int)))
+                    (λ [(Ref Datetime a)] (Ref (Maybe Int) a))
                 </p>
                 <span>
                     
@@ -560,7 +560,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), Int] ())
+                    (λ [(Ref Datetime a), Int] ())
                 </p>
                 <span>
                     
@@ -600,7 +600,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Maybe Int)] ())
+                    (λ [(Ref Datetime a), (Maybe Int)] ())
                 </p>
                 <span>
                     
@@ -640,7 +640,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Maybe Int)] ())
+                    (λ [(Ref Datetime a), (Maybe Int)] ())
                 </p>
                 <span>
                     
@@ -680,7 +680,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), Int] ())
+                    (λ [(Ref Datetime a), Int] ())
                 </p>
                 <span>
                     
@@ -720,7 +720,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Maybe Int)] ())
+                    (λ [(Ref Datetime a), (Maybe Int)] ())
                 </p>
                 <span>
                     
@@ -760,7 +760,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Maybe Int)] ())
+                    (λ [(Ref Datetime a), (Maybe Int)] ())
                 </p>
                 <span>
                     
@@ -800,7 +800,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), (Maybe Timezone)] ())
+                    (λ [(Ref Datetime a), (Maybe Timezone)] ())
                 </p>
                 <span>
                     
@@ -840,7 +840,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime), Int] ())
+                    (λ [(Ref Datetime a), Int] ())
                 </p>
                 <span>
                     
@@ -860,7 +860,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <span>
                     
@@ -880,7 +880,7 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     defn
                 </div>
                 <p class="sig">
-                    (λ [a, &amp;String] String)
+                    (λ [a, (Ref String b)] String)
                 </p>
                 <pre class="args">
                     (strftime dt s)
@@ -907,7 +907,7 @@ provided as a convenience for fine-grained string tweaking.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Int)
+                    (λ [(Ref Datetime a)] Int)
                 </p>
                 <pre class="args">
                     (to-ordinal dt)
@@ -927,7 +927,7 @@ provided as a convenience for fine-grained string tweaking.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Int)
+                    (λ [(Ref Datetime a)] Int)
                 </p>
                 <pre class="args">
                     (to-unix-timestamp dt)
@@ -949,7 +949,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] (Ref (Maybe Timezone)))
+                    (λ [(Ref Datetime a)] (Ref (Maybe Timezone) a))
                 </p>
                 <span>
                     
@@ -969,7 +969,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [Int] Int))] Datetime)
+                    (λ [Datetime, (Ref (λ [Int] Int a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -989,7 +989,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int) a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1009,7 +1009,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int) a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1029,7 +1029,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [Int] Int))] Datetime)
+                    (λ [Datetime, (Ref (λ [Int] Int a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1049,7 +1049,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int) a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1069,7 +1069,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int)))] Datetime)
+                    (λ [Datetime, (Ref (λ [(Maybe Int)] (Maybe Int) a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1089,7 +1089,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [(Maybe Timezone)] (Maybe Timezone)))] Datetime)
+                    (λ [Datetime, (Ref (λ [(Maybe Timezone)] (Maybe Timezone) a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1109,7 +1109,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [Datetime, (Ref (λ [Int] Int))] Datetime)
+                    (λ [Datetime, (Ref (λ [Int] Int a) b)] Datetime)
                 </p>
                 <span>
                     
@@ -1129,7 +1129,7 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Bool)
+                    (λ [(Ref Datetime a)] Bool)
                 </p>
                 <pre class="args">
                     (utc? dt)
@@ -1150,7 +1150,7 @@ also return true if the timezone is not set.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Int)
+                    (λ [(Ref Datetime a)] Int)
                 </p>
                 <pre class="args">
                     (weekday dt)
@@ -1170,7 +1170,7 @@ also return true if the timezone is not set.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <pre class="args">
                     (weekday-short-string dt)
@@ -1191,7 +1191,7 @@ also return true if the timezone is not set.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] String)
+                    (λ [(Ref Datetime a)] String)
                 </p>
                 <pre class="args">
                     (weekday-string dt)
@@ -1211,7 +1211,7 @@ also return true if the timezone is not set.</p>
                     instantiate
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] &amp;Int)
+                    (λ [(Ref Datetime a)] (Ref Int a))
                 </p>
                 <span>
                     
@@ -1231,7 +1231,7 @@ also return true if the timezone is not set.</p>
                     defn
                 </div>
                 <p class="sig">
-                    (λ [(Ref Datetime)] Int)
+                    (λ [(Ref Datetime a)] Int)
                 </p>
                 <pre class="args">
                     (yearday dt)
