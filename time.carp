@@ -48,7 +48,7 @@ and formatted using `strftime`, which mimics [the C formatting API](http://www.c
 Example:
 
 ```
-(load \"git@github.com:carpentry-org/time.carp@0.0.6\")
+(load \"git@github.com:carpentry-org/time.carp@0.0.7\")
 
 (defn main []
   (println* &(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")))

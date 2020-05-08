@@ -5,7 +5,7 @@ A lightweight time library and datatype for Carp.
 ## Installation
 
 ```clojure
-(load "git@github.com:carpentry-org/time.carp@0.0.6")
+(load "git@github.com:carpentry-org/time.carp@0.0.7")
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ friction datatype; this means that it should be relatively easy to create,
 modify, and convert to other types!
 
 ```clojure
-(load "git@github.com:carpentry-org/time.carp@0.0.6")
+(load "git@github.com:carpentry-org/time.carp@0.0.7")
 
 (defn main []
   (println* &(Datetime.strftime &(Datetime.now) "%Y-%m-%d %I:%M:%S.%n %p %z")))
