@@ -9,11 +9,13 @@
 (defmodule Timezone
   (def utc (init @"UTC" 0l false))
   (defn zero [] (init @"" 0l false))
+  (implements zero Timezone.zero)
 
   (defn = [a b]
     (and* (= (name a) (name b))
           (= (delta a) (delta b))
           (= (dst? a) (dst? b))))
+  (implements = Timezone.=)
 )
 
 (deftype Datetime [
@@ -38,8 +40,11 @@
   tm_yday Int,
   tm_isdst Int,
   tm_zone String,
-  tm_gmtoff Long,
 ])
+
+(defmodule TM
+  (register tm_gmtoff (Fn [&TM] &Long))
+)
 
 (doc Datetime "This module is primarily concerned with date and time. The
 `Datetime` type can be converted from and to various other types and formats,
@@ -48,7 +53,7 @@ and formatted using `strftime`, which mimics [the C formatting API](http://www.c
 Example:
 
 ```
-(load \"git@github.com:carpentry-org/time.carp@0.0.7\")
+(load \"git@github.com:carpentry-org/time.carp@0.0.8\")
 
 (defn main []
   (println* &(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
@@ -251,7 +256,7 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (private to-unix)
   (hidden to-unix)
   (defn to-unix [y m d hh mm ss delta]
-    (let [yy (for-year &(Array.range 1970 y 1) 366 365)]
+    (let [yy (for-year &(Result.unsafe-from-success (Array.range 1970 y 1)) 366 365)]
       (+ (* yy DAY)
          (+ (* @(Array.unsafe-nth &DAYS-BEFORE-MONTH m) DAY)
             (+ (* (Int.dec d) DAY)
@@ -274,7 +279,7 @@ timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
 1970.")
   (defn from-unix-timestamp [ts]
     (let [y (/ ts YEAR)
-          ld (Int.dec (for-year &(Array.range 1970 (+ y 1971) 1) 1 0))
+          ld (Int.dec (for-year &(Result.unsafe-from-success (Array.range 1970 (+ y 1971) 1)) 1 0))
           d (- (- (/ ts DAY) (* y 365)) ld)
           get-m-until (fn [n] (Array.reduce
                                 &(fn [acc x] (if (< @x n) @x acc))
@@ -331,6 +336,7 @@ All of the time information is obtained from the operating system directly.")
                                        (/= 0 @(TM.tm_isdst ct)))))))
 
   (register format (Fn [(Ref String) (Ref Datetime)] String))
+  (implements format Datetime.format)
 
   (doc strftime "formats the `Datetime` `dt` according to the string provided
 in `s`. The formatting options mimic [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
@@ -347,7 +353,7 @@ Example:
   (defn strftime [dt s]
     (let [strings (String.split-by s &[\%])
           ln (Int.dec (Array.length &strings))
-          rng (Array.range 0 ln 1)]
+          rng (Result.unsafe-from-success (Array.range 0 ln 1))]
       (String.concat &(Array.zip &(fn [x i]
                                     (if (and (String.empty? x)
                                              (or (= i &0) (= i &ln)))
@@ -419,6 +425,7 @@ optional ones.")
       (= (seconds a) (seconds b))
       (= (nanoseconds a) (nanoseconds b))
       (= &(Maybe.from @(tz a) @&Timezone.utc) &(Maybe.from @(tz b) @&Timezone.utc))))
+  (implements = Datetime.=)
 
   (doc > "is defined as the timezone-unaware comparison of `a` and `b`.")
   (defn > [a b]
@@ -429,6 +436,7 @@ optional ones.")
       (> (Maybe.from @(minutes a) 0) (Maybe.from @(minutes b) 0))
       (> (Maybe.from @(seconds a) 0) (Maybe.from @(seconds b) 0))
       (> (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
+  (implements > Datetime.>)
 
   (doc < "is defined as the timezone-unaware comparison of `a` and `b`.")
   (defn < [a b]
@@ -439,4 +447,5 @@ optional ones.")
       (< (Maybe.from @(minutes a) 0) (Maybe.from @(minutes b) 0))
       (< (Maybe.from @(seconds a) 0) (Maybe.from @(seconds b) 0))
       (< (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
+  (implements < Datetime.<)
 )

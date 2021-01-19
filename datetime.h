@@ -9,3 +9,7 @@ struct tm* create_time() {
   time(&rawtime);
   return localtime(&rawtime);
 }
+
+Long* TM_tm_gmtoff(TM* t) {
+  return (Long*)(&t->tm_gmtoff);
+}
