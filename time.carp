@@ -5,17 +5,11 @@
   delta Long,
   dst? Bool,
 ])
+(derive Timezone =)
+(derive Timezone zero)
 
 (defmodule Timezone
   (def utc (init @"UTC" 0l false))
-  (defn zero [] (init @"" 0l false))
-  (implements zero Timezone.zero)
-
-  (defn = [a b]
-    (and* (= (name a) (name b))
-          (= (delta a) (delta b))
-          (= (dst? a) (dst? b))))
-  (implements = Timezone.=)
 )
 
 (deftype Datetime [
