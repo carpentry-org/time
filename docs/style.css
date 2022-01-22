@@ -1,5 +1,5 @@
 html {
-    font-family: "Helvetica", sans-serif;
+    font-family: "Hasklig", "Lucida Console", monospace;
     font-size: 1.0em;
 }
 
@@ -12,16 +12,24 @@ a {
 }
 
 pre {
-    background: #eee;
+    background: #f1f1f1;
     padding: 10px;
+    overflow-x: scroll;
 }
 
-.logo {
+.logo img {
     display: none;
 }
 
+.logo {
+    padding: 1em;
+    position: fixed;
+    top: 1em;
+    right: 1em;
+}
+
 .args {
-  background-color: #eee;
+  background-color: #f1f1f1;
   padding: 3px;
   display: inline-block;
   margin-top: 0.3em;
@@ -31,8 +39,7 @@ pre {
 
 ul {
     list-style-type: none;
-    font-family: "Hasklig", "Lucida Console", monospace;
-    line-height: 1.4em;
+    line-height: 1.6em;
 }
 
 .title {
@@ -41,8 +48,14 @@ ul {
 
 .content {
     margin: 3em auto auto auto;
-    width: 80%;
-    max-width: 800px;
+    width: 70%;
+    max-width: 650px;
+}
+
+.module-description {
+    padding-bottom: 0.5em;
+    margin-bottom: 3.5em;
+    border-bottom: 5px solid #aaa;
 }
 
 h1 {
@@ -67,11 +80,13 @@ h3 {
 }
 
 .sig {
-    font-family: "Hasklig", "Source Code Pro", "Lucida Console", monospace;
+  font-family: "Hasklig", "Lucida Console", monospace;
+  background-color: #f1f1f1;
 }
 
 code {
-    font-family: "Hasklig", "Source Code Pro", "Lucida Console", monospace;
+  font-family: "Hasklig", "Lucida Console", monospace;
+  background-color: #f1f1f1;
 }
 
 .description {
@@ -82,18 +97,13 @@ code {
 }
 
 /* Smaller screens */
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 1000px) {
     .logo {
         margin: 1em;
         text-align: left;
         float: left;
         width: 100%;
-    }
-    .logo img {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        width: 50%;
+        position: inherit;
     }
     .content {
         margin: 0.5em;

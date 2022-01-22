@@ -5,7 +5,23 @@
 (Project.config "docs-logo" "")
 (Project.config "docs-url" "https://github.com/carpentry-org/time")
 (Project.config "docs-styling" "style.css")
-(Project.config "docs-generate-index" false)
+(Project.config "docs-prelude" "This library exports two important datatypes,
+[`Datetime`](./Datetime.html) and [`Timedelta`](./Timedelta.html).
+`Datetime` is meant to be a low friction datatype; this means that it should
+be relatively easy to create, modify, and convert to other types!
 
-(save-docs Datetime)
+`Timedelta` is used to add and subtract anything on the scale of  seconds to
+weeks from those times.
+
+```
+(load \"git@github.com:carpentry-org/time.carp@0.1.0\")
+
+(defn main []
+  (println*
+    &(Datetime.strftime
+      &(Timedelta.sub &(Datetime.now) &(Timedelta.days 2))
+      \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
+```")
+
+(save-docs Datetime Timedelta)
 (quit)

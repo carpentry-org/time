@@ -47,7 +47,7 @@ and formatted using `strftime`, which mimics [the C formatting API](http://www.c
 Example:
 
 ```
-(load \"git@github.com:carpentry-org/time.carp@0.0.8\")
+(load \"git@github.com:carpentry-org/time.carp@0.1.0\")
 
 (defn main []
   (println* &(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
@@ -213,32 +213,63 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (doc leap? "checks whether the `Datetime` `dt` is a leap year.")
   (defn leap? [dt] (is-leap @(year dt)))
 
-  (doc add-seconds "adds a number of seconds `n` to a `Datetime`.")
+  ; weird mod for our purposes (behaves more or less like in Python)
+  (hidden mod-)
+  (defn mod- [a n] (- a (* n (to-int (floor (/ (Double.from-int a) (Double.from-int n)))))))
+
+  (doc add-seconds "adds a number of seconds `n` to a `Datetime`.
+
+If `n` is negative, it will be subtracted instead.")
   (defn add-seconds [d n]
-    (let-do [nd @d
-             s (Maybe.from @(seconds d) 0)
-             a (+ s n)]
-      (set-seconds! &nd (Maybe.Just (Int.mod a 60)))
-      (if (< a 60)
-        nd
-        (let-do [m (/ a 60)
-                 dm (Maybe.from @(minutes d) 0)
-                 ma (+ m dm)]
-          (set-minutes! &nd (Maybe.Just (Int.mod ma 60)))
-          (if (< ma 60)
-            nd
-            (let-do [h (/ ma 60)
-                     dh (Maybe.from @(hours d) 0)
-                     ha (+ h dh)]
-              (set-hours! &nd (Maybe.Just (Int.mod ha 24)))
-              (if (< ha 24)
-                nd
-                (let-do [ord (to-ordinal d)
-                         nnd (from-ordinal (+ ord (/ ha 24)))]
-                  (set-day! &nd @(day &nnd))
-                  (set-month! &nd @(month &nnd))
-                  (set-year! &nd @(year &nnd))
-                  nd))))))))
+    (if (neg? n)
+      (let-do [nd @d
+               s (Maybe.from @(seconds d) 0)
+               a (dec (+ s n))]
+        (set-seconds! &nd (Maybe.Just (mod- a 60)))
+        (if (>= a 0)
+          nd
+          (let-do [m (/ a 60)
+                   dm (Maybe.from @(minutes d) 0)
+                   ma (dec (+ m dm))]
+            (set-minutes! &nd (Maybe.Just (mod- ma 60)))
+            (if (>= ma 0)
+              nd
+              (let-do [h (/ ma 60)
+                       dh (Maybe.from @(hours d) 0)
+                       ha (dec (+ h dh))]
+                (set-hours! &nd (Maybe.Just (mod- ha 24)))
+                (if (>= ha 0)
+                  nd
+                  (let-do [ord (to-ordinal d)
+                           nnd (from-ordinal (dec (+ ord (/ ha 24))))]
+                    (set-day! &nd @(day &nnd))
+                    (set-month! &nd @(month &nnd))
+                    (set-year! &nd @(year &nnd))
+                    nd)))))))
+      (let-do [nd @d
+               s (Maybe.from @(seconds d) 0)
+               a (+ s n)]
+        (set-seconds! &nd (Maybe.Just (Int.mod a 60)))
+        (if (< a 60)
+          nd
+          (let-do [m (/ a 60)
+                   dm (Maybe.from @(minutes d) 0)
+                   ma (+ m dm)]
+            (set-minutes! &nd (Maybe.Just (Int.mod ma 60)))
+            (if (< ma 60)
+              nd
+              (let-do [h (/ ma 60)
+                       dh (Maybe.from @(hours d) 0)
+                       ha (+ h dh)]
+                (set-hours! &nd (Maybe.Just (Int.mod ha 24)))
+                (if (< ha 24)
+                  nd
+                  (let-do [ord (to-ordinal d)
+                           nnd (from-ordinal (+ ord (/ ha 24)))]
+                    (set-day! &nd @(day &nnd))
+                    (set-month! &nd @(month &nnd))
+                    (set-year! &nd @(year &nnd))
+                    nd)))))))))
 
   (private for-year)
   (hidden for-year)
@@ -411,7 +442,7 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
   (doc = "is defined as the equality of all members of `a` and `b`, even the
 optional ones.")
   (defn = [a b]
-    (and*
+    (and
       (= (year a) (year b))
       (= (day a) (day b))
       (= (hours a) (hours b))
@@ -423,7 +454,7 @@ optional ones.")
 
   (doc > "is defined as the timezone-unaware comparison of `a` and `b`.")
   (defn > [a b]
-    (or*
+    (or
       (> @(year a) @(year b))
       (> @(day a) @(day b))
       (> (Maybe.from @(hours a) 0) (Maybe.from @(hours b) 0))
@@ -434,7 +465,7 @@ optional ones.")
 
   (doc < "is defined as the timezone-unaware comparison of `a` and `b`.")
   (defn < [a b]
-    (or*
+    (or
       (< @(year a) @(year b))
       (< @(day a) @(day b))
       (< (Maybe.from @(hours a) 0) (Maybe.from @(hours b) 0))
@@ -442,4 +473,57 @@ optional ones.")
       (< (Maybe.from @(seconds a) 0) (Maybe.from @(seconds b) 0))
       (< (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
   (implements < Datetime.<)
+)
+
+(deftype Timedelta [
+  seconds- Int
+])
+
+(doc Timedelta "this is a complementary module to be used with `Datetime` and
+is concerned with adding and subtracting time values of the scale from seconds
+to weeks from `Datetime` values.
+
+Example:
+```
+(load \"git@github.com:carpentry-org/time.carp@0.1.0\")
+
+(defn main []
+  (println*
+    &(Datetime.strftime
+      &(Timedelta.sub &(Datetime.now) &(Timedelta.days 2))
+      \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
+```
+")
+(defmodule Timedelta
+  (hidden seconds-)
+  (private seconds-)
+  (hidden set-seconds-)
+  (private set-seconds-)
+  (hidden set-seconds-!)
+  (private set-seconds-!)
+  (hidden update-seconds-!)
+  (private update-seconds-!)
+  (hidden update-seconds-)
+  (private update-seconds-)
+  (hidden init)
+  (private init)
+
+  (doc seconds "creates a delta representing a number of seconds `n`.")
+  (defn seconds [n] (init n))
+  (doc minutes "creates a delta representing a number of minutes `n`.")
+  (defn minutes [n] (seconds (* n 60)))
+  (doc hours "creates a delta representing a number of hours `n`.")
+  (defn hours [n]   (minutes (* n 60)))
+  (doc days "creates a delta representing a number of days `n`.")
+  (defn days [n]    (hours (* n 24)))
+  (doc weeks "creates a delta representing a number of weeks `n`.")
+  (defn weeks [n]   (days (* n 7)))
+
+  (doc add "adds a `Timedelta` `delta` to a `Datetime` `dt`.")
+  (defn add [dt delta]
+    (Datetime.add-seconds dt @(seconds- delta)))
+
+  (doc sub "subtracts a `Timedelta` `delta` from a `Datetime` `dt`.")
+  (defn sub [dt delta]
+    (Datetime.add-seconds dt (neg @(seconds- delta))))
 )

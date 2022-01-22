@@ -1,0 +1,52 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="content">
+            <a href="https://github.com/carpentry-org/time">
+                <div class="logo">
+                    <img src="" alt="Logo">
+                    <div class="index">
+                        <ul>
+                            <li>
+                                <a href="Datetime.html">
+                                    Datetime
+                                </a>
+                            </li>
+                            <li>
+                                <a href="Timedelta.html">
+                                    Timedelta
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <h1>
+                        time
+                    </h1>
+                    <p>This library exports two important datatypes,
+<a href="./Datetime.html"><code>Datetime</code></a> and <a href="./Timedelta.html"><code>Timedelta</code></a>.
+<code>Datetime</code> is meant to be a low friction datatype; this means that it should
+be relatively easy to create, modify, and convert to other types!</p>
+<p><code>Timedelta</code> is used to add and subtract anything on the scale of  seconds to
+weeks from those times.</p>
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.1.0&quot;)
+
+(defn main []
+  (println*
+    &amp;(Datetime.strftime
+      &amp;(Timedelta.sub &amp;(Datetime.now) &amp;(Timedelta.days 2))
+      &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
+</code></pre>
+
+                </div>
+            </a>
+        </div>
+    </body>
+</html>

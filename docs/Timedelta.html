@@ -1,0 +1,275 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="https://github.com/carpentry-org/time">
+                    <img src="">
+                </a>
+                <div class="title">
+                    time
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="Datetime.html">
+                                Datetime
+                            </a>
+                        </li>
+                        <li>
+                            <a href="Timedelta.html">
+                                Timedelta
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="module">
+                <h1>
+                    Timedelta
+                </h1>
+                <div class="module-description">
+                    <p>this is a complementary module to be used with <code>Datetime</code> and
+is concerned with adding and subtracting time values of the scale from seconds
+to weeks from <code>Datetime</code> values.</p>
+<p>Example:</p>
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.1.0&quot;)
+
+(defn main []
+  (println*
+    &amp;(Datetime.strftime
+      &amp;(Timedelta.sub &amp;(Datetime.now) &amp;(Timedelta.days 2))
+      &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
+</code></pre>
+
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#add">
+                        <h3 id="add">
+                            add
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Timedelta b)] Datetime)
+                    </p>
+                    <pre class="args">
+                        (add dt delta)
+                    </pre>
+                    <p class="doc">
+                        <p>adds a <code>Timedelta</code> <code>delta</code> to a <code>Datetime</code> <code>dt</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#copy">
+                        <h3 id="copy">
+                            copy
+                        </h3>
+                    </a>
+                    <div class="description">
+                        instantiate
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Timedelta a)] Timedelta)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>copies a <code>Timedelta</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#days">
+                        <h3 id="days">
+                            days
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Int] Timedelta)
+                    </p>
+                    <pre class="args">
+                        (days n)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a delta representing a number of days <code>n</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#delete">
+                        <h3 id="delete">
+                            delete
+                        </h3>
+                    </a>
+                    <div class="description">
+                        instantiate
+                    </div>
+                    <p class="sig">
+                        (Fn [Timedelta] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>deletes a <code>Timedelta</code>. Should usually not be called manually.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#hours">
+                        <h3 id="hours">
+                            hours
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Int] Timedelta)
+                    </p>
+                    <pre class="args">
+                        (hours n)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a delta representing a number of hours <code>n</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#minutes">
+                        <h3 id="minutes">
+                            minutes
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Int] Timedelta)
+                    </p>
+                    <pre class="args">
+                        (minutes n)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a delta representing a number of minutes <code>n</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#prn">
+                        <h3 id="prn">
+                            prn
+                        </h3>
+                    </a>
+                    <div class="description">
+                        instantiate
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Timedelta a)] String)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>converts a <code>Timedelta</code> to a string.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#seconds">
+                        <h3 id="seconds">
+                            seconds
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Int] Timedelta)
+                    </p>
+                    <pre class="args">
+                        (seconds n)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a delta representing a number of seconds <code>n</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#str">
+                        <h3 id="str">
+                            str
+                        </h3>
+                    </a>
+                    <div class="description">
+                        instantiate
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Timedelta a)] String)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>converts a <code>Timedelta</code> to a string.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#sub">
+                        <h3 id="sub">
+                            sub
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Timedelta b)] Datetime)
+                    </p>
+                    <pre class="args">
+                        (sub dt delta)
+                    </pre>
+                    <p class="doc">
+                        <p>subtracts a <code>Timedelta</code> <code>delta</code> from a <code>Datetime</code> <code>dt</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#weeks">
+                        <h3 id="weeks">
+                            weeks
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Int] Timedelta)
+                    </p>
+                    <pre class="args">
+                        (weeks n)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a delta representing a number of weeks <code>n</code>.</p>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
