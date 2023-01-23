@@ -5,7 +5,7 @@ A lightweight time library and datatype for Carp.
 ## Installation
 
 ```clojure
-(load "git@github.com:carpentry-org/time.carp@0.1.0")
+(load "git@github.com:carpentry-org/time@0.1.0")
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ be relatively easy to create, modify, and convert to other types!
 weeks from those times.
 
 ```clojure
-(load "git@github.com:carpentry-org/time.carp@0.1.0")
+(load "git@github.com:carpentry-org/time@0.1.0")
 
 (defn main []
   (println*
