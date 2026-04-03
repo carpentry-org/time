@@ -18,6 +18,11 @@
                 <div class="index">
                     <ul>
                         <li>
+                            <a href="Timezone.html">
+                                Timezone
+                            </a>
+                        </li>
+                        <li>
                             <a href="Datetime.html">
                                 Datetime
                             </a>
@@ -37,12 +42,21 @@
                 <div class="module-description">
                     <p>This module is primarily concerned with date and time. The
 <code>Datetime</code> type can be converted from and to various other types and formats,
-and formatted using <code>strftime</code>, which mimics <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
-<p>Example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.1.0&quot;)
+formatted using <code>strftime</code>, and parsed using <code>strptime</code>. Both mimic
+<a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
+<p>Formatting example:</p>
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.2.0&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
+</code></pre>
+<p>Parsing example:</p>
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.2.0&quot;)
+
+(defn main []
+  (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
+    (Result.Success dt) (println* &amp;(Datetime.isoformat &amp;dt))
+    (Result.Error e) (println* &amp;e)))
 </code></pre>
 
                 </div>
@@ -920,6 +934,55 @@ be able to use one of the formatting properties there. Thus this function is
 provided as a convenience for fine-grained string tweaking.</p>
 <p>Example:</p>
 <pre><code>&amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)
+</code></pre>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#strptime">
+                        <h3 id="strptime">
+                            strptime
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref String a), (Ref String b)] (Result Datetime String))
+                    </p>
+                    <pre class="args">
+                        (strptime input fmt)
+                    </pre>
+                    <p class="doc">
+                        <p>parses a string <code>input</code> according to format string <code>fmt</code>,
+returning a <code>(Result Datetime String)</code>.</p>
+<p>The format specifiers mirror those of <code>strftime</code>:</p>
+<ul>
+<li><code>%Y</code> — 4-digit year</li>
+<li><code>%y</code> — 2-digit year (00–68 → 2000–2068, 69–99 → 1969–1999)</li>
+<li><code>%m</code> — 2-digit month (01–12)</li>
+<li><code>%b</code> — abbreviated month name (Jan, Feb, ...)</li>
+<li><code>%B</code> — full month name (January, February, ...)</li>
+<li><code>%d</code> — 2-digit day (01–31)</li>
+<li><code>%H</code> — 2-digit hour, 24h (00–23)</li>
+<li><code>%I</code> — 2-digit hour, 12h (01–12)</li>
+<li><code>%p</code> — AM or PM</li>
+<li><code>%M</code> — 2-digit minute (00–59)</li>
+<li><code>%S</code> — 2-digit second (00–59)</li>
+<li><code>%n</code> — 9-digit nanoseconds</li>
+<li><code>%z</code> — timezone offset (+HHMM or -HHMM)</li>
+<li><code>%Z</code> — timezone name (alphabetic characters)</li>
+<li><code>%a</code> — abbreviated weekday (parsed and discarded)</li>
+<li><code>%A</code> — full weekday (parsed and discarded)</li>
+<li><code>%w</code> — weekday number (parsed and discarded)</li>
+<li><code>%j</code> — day of year (parsed and discarded)</li>
+<li><code>%U</code>, <code>%W</code> — week number (parsed and discarded)</li>
+<li><code>%c</code> — locale datetime (expands to <code>%a %b %d %H:%M:%S %Y</code>)</li>
+<li><code>%x</code> — ISO date (expands to <code>%Y-%m-%d</code>)</li>
+<li><code>%X</code> — ISO time (expands to <code>%H:%M:%S</code>)</li>
+</ul>
+<p>Example:</p>
+<pre><code>(Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
 </code></pre>
 
                     </p>

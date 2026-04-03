@@ -14,6 +14,11 @@
                     <div class="index">
                         <ul>
                             <li>
+                                <a href="Timezone.html">
+                                    Timezone
+                                </a>
+                            </li>
+                            <li>
                                 <a href="Datetime.html">
                                     Datetime
                                 </a>
@@ -30,19 +35,32 @@
                     <h1>
                         time
                     </h1>
-                    <p>This library exports two important datatypes,
-<a href="./Datetime.html"><code>Datetime</code></a> and <a href="./Timedelta.html"><code>Timedelta</code></a>.
-<code>Datetime</code> is meant to be a low friction datatype; this means that it should
-be relatively easy to create, modify, and convert to other types!</p>
-<p><code>Timedelta</code> is used to add and subtract anything on the scale of  seconds to
+                    <p>This library exports three datatypes:
+<a href="./Datetime.html"><code>Datetime</code></a>, <a href="./Timedelta.html"><code>Timedelta</code></a>, and
+<a href="./Timezone.html"><code>Timezone</code></a>.</p>
+<p><code>Datetime</code> is meant to be a low friction datatype; this means that it should
+be relatively easy to create, modify, and convert to other types! It can be
+formatted with <code>strftime</code> and parsed with <code>strptime</code>, both mirroring the C
+formatting API.</p>
+<p><code>Timedelta</code> is used to add and subtract anything on the scale of seconds to
 weeks from those times.</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time@0.1.0&quot;)
+<p><code>Timezone</code> represents a timezone with a name, UTC offset, and DST flag.</p>
+<h3>Formatting</h3>
+<pre><code>(load &quot;git@github.com:carpentry-org/time@0.2.0&quot;)
 
 (defn main []
   (println*
     &amp;(Datetime.strftime
       &amp;(Timedelta.sub &amp;(Datetime.now) &amp;(Timedelta.days 2))
       &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
+</code></pre>
+<h3>Parsing</h3>
+<pre><code>(load &quot;git@github.com:carpentry-org/time@0.2.0&quot;)
+
+(defn main []
+  (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
+    (Result.Success dt) (println* &amp;(Datetime.isoformat &amp;dt))
+    (Result.Error e) (println* &amp;e)))
 </code></pre>
 
                 </div>

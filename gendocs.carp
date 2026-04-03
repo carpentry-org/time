@@ -5,23 +5,40 @@
 (Project.config "docs-logo" "")
 (Project.config "docs-url" "https://github.com/carpentry-org/time")
 (Project.config "docs-styling" "style.css")
-(Project.config "docs-prelude" "This library exports two important datatypes,
-[`Datetime`](./Datetime.html) and [`Timedelta`](./Timedelta.html).
-`Datetime` is meant to be a low friction datatype; this means that it should
-be relatively easy to create, modify, and convert to other types!
+(Project.config "docs-prelude" "This library exports three datatypes:
+[`Datetime`](./Datetime.html), [`Timedelta`](./Timedelta.html), and
+[`Timezone`](./Timezone.html).
 
-`Timedelta` is used to add and subtract anything on the scale of  seconds to
+`Datetime` is meant to be a low friction datatype; this means that it should
+be relatively easy to create, modify, and convert to other types! It can be
+formatted with `strftime` and parsed with `strptime`, both mirroring the C
+formatting API.
+
+`Timedelta` is used to add and subtract anything on the scale of seconds to
 weeks from those times.
 
+`Timezone` represents a timezone with a name, UTC offset, and DST flag.
+
+### Formatting
 ```
-(load \"git@github.com:carpentry-org/time@0.1.0\")
+(load \"git@github.com:carpentry-org/time@0.2.0\")
 
 (defn main []
   (println*
     &(Datetime.strftime
       &(Timedelta.sub &(Datetime.now) &(Timedelta.days 2))
       \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
+```
+
+### Parsing
+```
+(load \"git@github.com:carpentry-org/time@0.2.0\")
+
+(defn main []
+  (match (Datetime.strptime \"2024-03-15 14:30:00\" \"%Y-%m-%d %H:%M:%S\")
+    (Result.Success dt) (println* &(Datetime.isoformat &dt))
+    (Result.Error e) (println* &e)))
 ```")
 
-(save-docs Datetime Timedelta)
+(save-docs Timezone Datetime Timedelta)
 (quit)
