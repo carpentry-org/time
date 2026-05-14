@@ -28,29 +28,17 @@ effect (`dst?`).")
    nanoseconds (Maybe Int)
    tz (Maybe Timezone)])
 
-(register-type
-  TM
-  [
-    tm_sec
-    Int
-    tm_min
-    Int
-    tm_hour
-    Int
-    tm_mday
-    Int
-    tm_mon
-    Int
-    tm_year
-    Int
-    tm_wday
-    Int
-    tm_yday
-    Int
-    tm_isdst
-    Int
-    tm_zone
-    String])
+(register-type TM
+  [tm_sec Int
+   tm_min Int
+   tm_hour Int
+   tm_mday Int
+   tm_mon Int
+   tm_year Int
+   tm_wday Int
+   tm_yday Int
+   tm_isdst Int
+   tm_zone String])
 
 (defmodule TM (register tm_gmtoff (Fn [&TM] &Long)))
 
