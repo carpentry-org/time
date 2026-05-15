@@ -78,32 +78,30 @@ it.")
   (private MONTH-STRINGS)
   (hidden MONTH-STRINGS)
   (def MONTH-STRINGS
-    [
-      @""
-      @"January"
-      @"February"
-      @"March"
-      @"April"
-      @"May"
-      @"June"
-      @"July"
-      @"August"
-      @"September"
-      @"October"
-      @"November"
-      @"December"])
+    [@""
+     @"January"
+     @"February"
+     @"March"
+     @"April"
+     @"May"
+     @"June"
+     @"July"
+     @"August"
+     @"September"
+     @"October"
+     @"November"
+     @"December"])
   (private WEEKDAY-STRINGS)
   (hidden WEEKDAY-STRINGS)
   (def WEEKDAY-STRINGS
-    [
-      @""
-      @"Monday"
-      @"Tuesday"
-      @"Wednesday"
-      @"Thursday"
-      @"Friday"
-      @"Saturday"
-      @"Sunday"])
+    [@""
+     @"Monday"
+     @"Tuesday"
+     @"Wednesday"
+     @"Thursday"
+     @"Friday"
+     @"Saturday"
+     @"Sunday"])
   (private DAYS-IN-MONTH)
   (hidden DAYS-IN-MONTH)
   (def DAYS-IN-MONTH [0 31 28 31 30 31 30 31 31 30 31 30 31])
@@ -223,8 +221,8 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
 `Datetime` `dt`.")
   (defn weekday-short-string [dt]
     (let [modord (mod (to-ordinal dt) 7)]
-      (String.prefix (Array.unsafe-nth &WEEKDAY-STRINGS
-          (if (= modord 0) 7 modord))
+      (String.prefix
+        (Array.unsafe-nth &WEEKDAY-STRINGS (if (= modord 0) 7 modord))
         3)))
 
   (doc month-string "returns the name of the month of the `Datetime` `dt`.")
@@ -261,13 +259,13 @@ If `n` is negative, it will be subtracted instead.")
             (if (>= ma 0)
               nd
               (let-do [h (/ ma 60)
-                  dh (Maybe.from @(hours d) 0)
-                  ha (dec (+ h dh))]
+                       dh (Maybe.from @(hours d) 0)
+                       ha (dec (+ h dh))]
                 (set-hours! &nd (Maybe.Just (mod- ha 24)))
                 (if (>= ha 0)
                   nd
                   (let-do [ord (to-ordinal d)
-                      nnd (from-ordinal (dec (+ ord (/ ha 24))))]
+                           nnd (from-ordinal (dec (+ ord (/ ha 24))))]
                     (set-day! &nd @(day &nnd))
                     (set-month! &nd @(month &nnd))
                     (set-year! &nd @(year &nnd))
@@ -285,13 +283,13 @@ If `n` is negative, it will be subtracted instead.")
             (if (< ma 60)
               nd
               (let-do [h (/ ma 60)
-                  dh (Maybe.from @(hours d) 0)
-                  ha (+ h dh)]
+                       dh (Maybe.from @(hours d) 0)
+                       ha (+ h dh)]
                 (set-hours! &nd (Maybe.Just (Int.mod ha 24)))
                 (if (< ha 24)
                   nd
                   (let-do [ord (to-ordinal d)
-                      nnd (from-ordinal (+ ord (/ ha 24)))]
+                           nnd (from-ordinal (+ ord (/ ha 24)))]
                     (set-day! &nd @(day &nnd))
                     (set-month! &nd @(month &nnd))
                     (set-year! &nd @(year &nnd))
@@ -305,13 +303,15 @@ If `n` is negative, it will be subtracted instead.")
   (private to-unix)
   (hidden to-unix)
   (defn to-unix [y m d hh mm ss delta]
-    (let [yy (for-year &(Result.unsafe-from-success (Array.range 1970 y 1))
+    (let [yy (for-year
+            &(Result.unsafe-from-success (Array.range 1970 y 1))
             366
             365)]
       (+ (* yy DAY)
-         (+ (* @(Array.unsafe-nth &DAYS-BEFORE-MONTH m) DAY)
-            (+ (* (Int.dec d) DAY)
-               (+ (* hh HOUR) (+ (* mm MINUTE) (+ (Long.to-int delta) ss))))))))
+         (+
+           (* @(Array.unsafe-nth &DAYS-BEFORE-MONTH m) DAY)
+           (+ (* (Int.dec d) DAY)
+              (+ (* hh HOUR) (+ (* mm MINUTE) (+ (Long.to-int delta) ss))))))))
 
   (doc to-unix-timestamp "returns the representation of the `Datetime` `dt` as
 a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
@@ -331,16 +331,16 @@ timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
 1970.")
   (defn from-unix-timestamp [ts]
     (let [y (/ ts YEAR)
-          ld (Int.dec (for-year &(Result.unsafe-from-success (Array.range 1970
-                  (+ y 1971)
-                  1))
+          ld (Int.dec
+            (for-year
+              &(Result.unsafe-from-success (Array.range 1970 (+ y 1971) 1))
               1
               0))
           d (- (- (/ ts DAY) (* y 365)) ld)
           get-m-until (fn [n]
             (Array.reduce &(fn [acc x] (if (< @x n) @x acc))
-              0
-              &DAYS-BEFORE-MONTH))
+                          0
+                          &DAYS-BEFORE-MONTH))
           mdays (get-m-until d)
           m (Maybe.unsafe-from (Array.index-of &DAYS-BEFORE-MONTH &mdays))
           nd (- d mdays)
@@ -395,9 +395,10 @@ All of the time information is obtained from the operating system directly.")
             (Maybe.Just @(TM.tm_min ct))
             (Maybe.Just @(TM.tm_sec ct))
             (Maybe.Just (Long.to-int (mod (Uint64.to-long t) 1000000000l)))
-            (Maybe.Just (Timezone.init @(TM.tm_zone ct)
-                @(TM.tm_gmtoff ct)
-                (/= 0 @(TM.tm_isdst ct)))))))
+            (Maybe.Just
+              (Timezone.init @(TM.tm_zone ct)
+                             @(TM.tm_gmtoff ct)
+                             (/= 0 @(TM.tm_isdst ct)))))))
 
   (register format (Fn [(Ref String) (Ref Datetime)] String))
   (implements format Datetime.format)
@@ -418,7 +419,9 @@ Example:
     (let [strings (String.split-by s &[\%])
           ln (Int.dec (Array.length &strings))
           rng (Result.unsafe-from-success (Array.range 0 ln 1))]
-      (String.concat &(Array.zip &(fn [x i]
+      (String.concat
+        &(Array.zip
+          &(fn [x i]
             (if (and (String.empty? x) (or (= i &0) (= i &ln)))
               @""
               (if (String.empty? x) @"%" (format &(String.concat &[@"%" @x]) dt))))
@@ -465,9 +468,9 @@ Example:
               (let [d @(Timezone.delta &t)
                     s (* 60l 60l)]
                 (fmt "%s%02d%02d"
-                  (if (< d 0l) "-" "+")
-                  (Long.abs (/ d s))
-                  (mod d s)))
+                     (if (< d 0l) "-" "+")
+                     (Long.abs (/ d s))
+                     (mod d s)))
             (Maybe.Nothing) @"")
           \Z
           @(Timezone.name &(Maybe.from @(tz dt) (Timezone.zero)))
@@ -491,8 +494,8 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
   (defn format [s dt]
     (let [idx (String.index-of s \%)
           formatter (String.char-at s (Int.inc idx))]
-      (String.concat &[
-          (String.prefix s idx)
+      (String.concat
+        &[(String.prefix s idx)
           (format-for formatter dt)
           (String.suffix s (+ idx 2))])))
 
@@ -533,7 +536,7 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
         (while (and (= result -1) (< i (Array.length arr)))
           (let [candidate (Array.unsafe-nth arr i)]
             (if (and (>= (String.length candidate) 3)
-                (= &tok &(String.prefix candidate 3)))
+                     (= &tok &(String.prefix candidate 3)))
               (set! result i)
               (set! i (+ i 1)))))
         result)))
@@ -552,7 +555,7 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
                     \c
                     (do
                       (set! result
-                        (String.concat &[result @"%a %b %d %H:%M:%S %Y"]))
+                            (String.concat &[result @"%a %b %d %H:%M:%S %Y"]))
                       (set! i (+ i 2)))
                     \x
                     (do
@@ -682,7 +685,7 @@ Example:
                     (if (> (+ ipos 2) ilen)
                       (do (set! err @"failed to parse %p") (set! ok false))
                       (let [sub (String.suffix input ipos)
-                          tok (String.prefix &sub 2)]
+                            tok (String.prefix &sub 2)]
                         (if (= &tok "AM")
                           (do
                             (set! ampm 1)
@@ -737,9 +740,9 @@ Example:
                         (do
                           (set! mo idx)
                           (set! ipos
-                            (+ ipos
-                              (String.length (Array.unsafe-nth &MONTH-STRINGS
-                                  idx))))
+                                (+ ipos
+                                   (String.length (Array.unsafe-nth &MONTH-STRINGS
+                                                                    idx))))
                           (set! fpos (+ fpos 2)))
                         (do (set! err @"failed to parse %B") (set! ok false))))
                     \a
@@ -752,9 +755,9 @@ Example:
                       (if (> idx 0)
                         (do
                           (set! ipos
-                            (+ ipos
-                              (String.length (Array.unsafe-nth &WEEKDAY-STRINGS
-                                  idx))))
+                                (+ ipos
+                                   (String.length (Array.unsafe-nth &WEEKDAY-STRINGS
+                                                                    idx))))
                           (set! fpos (+ fpos 2)))
                         (do (set! err @"failed to parse %A") (set! ok false))))
                     \w
@@ -792,9 +795,9 @@ Example:
                                 (Maybe.Just zm)
                                   (let-do [sign-mult (if (= sign-c \-) -1l 1l)]
                                     (set! tz-delta
-                                      (* sign-mult
-                                        (+ (* (Long.from-int zh) 3600l)
-                                          (* (Long.from-int zm) 60l))))
+                                          (* sign-mult
+                                             (+ (* (Long.from-int zh) 3600l)
+                                                (* (Long.from-int zm) 60l))))
                                     (set! has-tz true)
                                     (set! ipos (+ ipos 5))
                                     (set! fpos (+ fpos 2)))
@@ -810,13 +813,13 @@ Example:
                     \Z
                     (let-do [n 0]
                       (while (and (< (+ ipos n) ilen)
-                          (let [c (String.char-at input (+ ipos n))]
-                            (or (and (>= c \A) (<= c \Z))
-                              (and (>= c \a) (<= c \z)))))
+                                  (let [c (String.char-at input (+ ipos n))]
+                                    (or (and (>= c \A) (<= c \Z))
+                                        (and (>= c \a) (<= c \z)))))
                         (set! n (+ n 1)))
                       (if (> n 0)
                         (let-do [sub (String.suffix input ipos)
-                            nm (String.prefix &sub n)]
+                                 nm (String.prefix &sub n)]
                           (set! tz-nm nm)
                           (set! has-tz true)
                           (set! ipos (+ ipos n))
@@ -828,17 +831,15 @@ Example:
                       (do (set! err @"failed to parse %%") (set! ok false)))
                     (do
                       (set! err
-                        (String.concat &[
-                            @"unknown format specifier: %"
-                            (str spec)]))
+                            (String.concat
+                              &[@"unknown format specifier: %" (str spec)]))
                       (set! ok false))))
             (if (and (< ipos ilen) (= fc (String.char-at input ipos)))
               (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 1)))
               (do
                 (set! err
-                  (String.concat &[
-                      @"unexpected character at position "
-                      (Int.str ipos)]))
+                      (String.concat
+                        &[@"unexpected character at position " (Int.str ipos)]))
                 (set! ok false))))))
       (if ok
         (let [final-hr (if (= ampm 2)
@@ -853,14 +854,8 @@ Example:
               tz-val (if has-tz
                 (Maybe.Just (Timezone.init @&tz-nm tz-delta false))
                 (Maybe.Nothing))]
-          (Result.Success (init yr
-              mo
-              dy
-              hours-val
-              minutes-val
-              seconds-val
-              ns-val
-              tz-val)))
+          (Result.Success
+            (init yr mo dy hours-val minutes-val seconds-val ns-val tz-val)))
         (Result.Error @&err))))
 
   (doc = "is defined as the equality of all members of `a` and `b`, even the
