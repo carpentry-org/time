@@ -236,10 +236,13 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (doc leap? "checks whether the `Datetime` `dt` is a leap year.")
   (defn leap? [dt] (is-leap @(year dt)))
 
+  ; floor division (matches Python's //)
+  (hidden div-)
+  (defn div- [a n] (to-int (floor (/ (Double.from-int a) (Double.from-int n)))))
+
   ; weird mod for our purposes (behaves more or less like in Python)
   (hidden mod-)
-  (defn mod- [a n]
-    (- a (* n (to-int (floor (/ (Double.from-int a) (Double.from-int n)))))))
+  (defn mod- [a n] (- a (* n (div- a n))))
 
   (doc add-seconds "adds a number of seconds `n` to a `Datetime`.
 
@@ -248,24 +251,24 @@ If `n` is negative, it will be subtracted instead.")
     (if (neg? n)
       (let-do [nd @d
                s (Maybe.from @(seconds d) 0)
-               a (dec (+ s n))]
+               a (+ s n)]
         (set-seconds! &nd (Maybe.Just (mod- a 60)))
         (if (>= a 0)
           nd
-          (let-do [m (/ a 60)
+          (let-do [m (div- a 60)
                    dm (Maybe.from @(minutes d) 0)
-                   ma (dec (+ m dm))]
+                   ma (+ m dm)]
             (set-minutes! &nd (Maybe.Just (mod- ma 60)))
             (if (>= ma 0)
               nd
-              (let-do [h (/ ma 60)
+              (let-do [h (div- ma 60)
                        dh (Maybe.from @(hours d) 0)
-                       ha (dec (+ h dh))]
+                       ha (+ h dh)]
                 (set-hours! &nd (Maybe.Just (mod- ha 24)))
                 (if (>= ha 0)
                   nd
                   (let-do [ord (to-ordinal d)
-                           nnd (from-ordinal (dec (+ ord (/ ha 24))))]
+                           nnd (from-ordinal (+ ord (div- ha 24)))]
                     (set-day! &nd @(day &nnd))
                     (set-month! &nd @(month &nnd))
                     (set-year! &nd @(year &nnd))
@@ -303,10 +306,12 @@ If `n` is negative, it will be subtracted instead.")
   (private to-unix)
   (hidden to-unix)
   (defn to-unix [y m d hh mm ss delta]
-    (let [yy (for-year
-            &(Result.unsafe-from-success (Array.range 1970 y 1))
-            366
-            365)]
+    (let [yy (if (<= y 1970)
+            0
+            (for-year
+              &(Result.unsafe-from-success (Array.range 1970 (Int.dec y) 1))
+              366
+              365))]
       (+ (* yy DAY)
          (+
            (* @(Array.unsafe-nth &DAYS-BEFORE-MONTH m) DAY)
@@ -326,23 +331,28 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                (Maybe.from @(seconds dt) 0)
                @(Timezone.delta &tz))))
 
+  (private find-month-from-days)
+  (hidden find-month-from-days)
+  (defn find-month-from-days [d]
+    (let-do [m 1]
+      (for [i 2 13]
+        (when (<= @(Array.unsafe-nth &DAYS-BEFORE-MONTH i) d) (set! m i)))
+      m))
+
   (doc from-unix-timestamp "returns the `Datetime` equivalent to the UNIX
 timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
 1970.")
   (defn from-unix-timestamp [ts]
     (let [y (/ ts YEAR)
-          ld (Int.dec
+          ld (if (<= y 0)
+            0
             (for-year
-              &(Result.unsafe-from-success (Array.range 1970 (+ y 1971) 1))
+              &(Result.unsafe-from-success (Array.range 1970 (+ y 1969) 1))
               1
               0))
           d (- (- (/ ts DAY) (* y 365)) ld)
-          get-m-until (fn [n]
-            (Array.reduce &(fn [acc x] (if (< @x n) @x acc))
-                          0
-                          &DAYS-BEFORE-MONTH))
-          mdays (get-m-until d)
-          m (Maybe.unsafe-from (Array.index-of &DAYS-BEFORE-MONTH &mdays))
+          m (find-month-from-days d)
+          mdays @(Array.unsafe-nth &DAYS-BEFORE-MONTH m)
           nd (- d mdays)
           tmpy (* y (* 365 24))
           tmpd (* (+ nd (+ ld mdays)) 24)

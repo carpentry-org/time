@@ -186,20 +186,29 @@
     "different dates are not equal")
 
   ; --- Datetime.to-unix-timestamp / from-unix-timestamp ---
-  ; NOTE: to-unix-timestamp and from-unix-timestamp have pre-existing bugs
-  ; (out-of-bounds array access). Tests are skipped until the library is fixed.
-  ; (assert-equal test
-  ;               0
-  ;               (Datetime.to-unix-timestamp &(Datetime.init 1970 1 1
-  ;                   (Maybe.Just 0) (Maybe.Just 0) (Maybe.Just 0)
-  ;                   (Maybe.Nothing) (Maybe.Nothing)))
-  ;               "unix epoch is timestamp 0")
-  ; (assert-equal test
-  ;               &(Datetime.init 1970 1 1
-  ;                   (Maybe.Just 0) (Maybe.Just 0) (Maybe.Just 0)
-  ;                   (Maybe.Nothing) (Maybe.Nothing))
-  ;               &(Datetime.from-unix-timestamp 0)
-  ;               "from-unix-timestamp 0 is epoch")
+  (assert-equal test
+    0
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 1970
+                      1
+                      1
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "unix epoch is timestamp 0")
+  (assert-equal test
+    &(Datetime.init 1970
+                    1
+                    1
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 0)
+    "from-unix-timestamp 0 is epoch")
 
   ; --- Datetime.add-seconds ---
   (assert-equal test
@@ -318,10 +327,8 @@
                         (Maybe.Nothing))
         &(Timedelta.days 1)))
     "Timedelta.add 1 day advances the day")
-  ; NOTE: add-seconds has an off-by-one bug with negative values;
-  ; subtracting 5 minutes from 00:00:00 yields 23:54:59 instead of 23:55:00.
   (assert-equal test
-    &@"23:54:59"
+    &@"23:55:00"
     &(Datetime.isotime
       &(Timedelta.sub
         &(Datetime.init 2024
@@ -333,7 +340,7 @@
                         (Maybe.Nothing)
                         (Maybe.Nothing))
         &(Timedelta.minutes 5)))
-    "Timedelta.sub 5 minutes wraps back (off-by-one bug)")
+    "Timedelta.sub 5 minutes wraps back")
 
   ; --- Datetime.strptime ---
   ; basic date parsing
