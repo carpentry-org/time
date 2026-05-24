@@ -361,12 +361,15 @@ timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
             (Maybe.Nothing)
             (Maybe.Nothing))))
 
-  ; TODO should this be case-insensitive?
-  (doc utc? "checks whether the timezone of the `Datetime` `dt` is UTC. It will
-also return true if the timezone is not set.")
+  (doc utc? "checks whether the timezone of the `Datetime` `dt` is UTC. The
+timezone name comparison is case-insensitive. It will also return true if the
+timezone is not set.")
   (defn utc? [dt]
     (or (Maybe.nothing? (tz dt))
-        (= &Timezone.utc &(Maybe.from @(tz dt) (Timezone.zero)))))
+        (let [t (Maybe.from @(tz dt) (Timezone.zero))]
+          (and
+            (= &(String.ascii-to-lower (Timezone.name &t)) "utc")
+            (and (= @(Timezone.delta &t) 0l) (not @(Timezone.dst? &t)))))))
 
   (doc isoformat "returns the ISO format for the `Datetime` `dt`.
 

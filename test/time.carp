@@ -165,6 +165,28 @@
                       (Maybe.Nothing)
                       (Maybe.Just @&Timezone.utc)))
     "date with UTC timezone is utc")
+  (assert-true test
+    (Datetime.utc?
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)
+                      (Maybe.Just (Timezone.init @"utc" 0l false))))
+    "date with lowercase utc timezone is utc")
+  (assert-true test
+    (Datetime.utc?
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)
+                      (Maybe.Just (Timezone.init @"Utc" 0l false))))
+    "date with mixed case Utc timezone is utc")
   (assert-false test
     (Datetime.utc?
       &(Datetime.init 2024
