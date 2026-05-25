@@ -209,6 +209,27 @@
                     (Maybe.Nothing))
     &(Datetime.from-unix-timestamp 0)
     "from-unix-timestamp 0 is epoch")
+  ; Feb 29 leap year round-trip (1972 is a leap year, ts = 68169600)
+  (assert-equal test
+    &(Datetime.init 1972
+                    2
+                    29
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp
+      (Datetime.to-unix-timestamp
+        &(Datetime.init 1972
+                        2
+                        29
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))))
+    "from-unix-timestamp round-trips Feb 29 in leap year")
 
   ; --- Datetime.add-seconds ---
   (assert-equal test
