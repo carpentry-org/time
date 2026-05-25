@@ -318,10 +318,8 @@
                         (Maybe.Nothing))
         &(Timedelta.days 1)))
     "Timedelta.add 1 day advances the day")
-  ; NOTE: add-seconds has an off-by-one bug with negative values;
-  ; subtracting 5 minutes from 00:00:00 yields 23:54:59 instead of 23:55:00.
   (assert-equal test
-    &@"23:54:59"
+    &@"23:55:00"
     &(Datetime.isotime
       &(Timedelta.sub
         &(Datetime.init 2024
@@ -333,7 +331,7 @@
                         (Maybe.Nothing)
                         (Maybe.Nothing))
         &(Timedelta.minutes 5)))
-    "Timedelta.sub 5 minutes wraps back (off-by-one bug)")
+    "Timedelta.sub 5 minutes wraps back")
 
   ; --- Datetime.strptime ---
   ; basic date parsing
@@ -570,4 +568,54 @@
                           (Maybe.Nothing))
           "%Y-%m-%d %H:%M:%S")
         "%Y-%m-%d %H:%M:%S"))
-    "strptime roundtrips with strftime for datetime"))
+    "strptime roundtrips with strftime for datetime")
+
+  ; --- Datetime comparison operators ---
+  (assert-true test
+    (= &(Datetime.date 2024 3 15) &(Datetime.date 2024 3 15))
+    "equal dates are equal")
+  (assert-false test
+    (= &(Datetime.date 2024 1 15) &(Datetime.date 2024 2 15))
+    "different months are not equal")
+  (assert-true test
+    (> &(Datetime.date 2024 3 15) &(Datetime.date 2024 2 15))
+    "greater-than with same year different month")
+  (assert-true test
+    (< &(Datetime.date 2023 12 31) &(Datetime.date 2024 1 1))
+    "less-than with year priority over month")
+  (assert-false test
+    (> &(Datetime.date 2024 3 15) &(Datetime.date 2024 3 15))
+    "equal datetimes return false for >")
+  (assert-false test
+    (< &(Datetime.date 2024 3 15) &(Datetime.date 2024 3 15))
+    "equal datetimes return false for <")
+
+  ; --- add-seconds negative edge cases ---
+  (assert-equal test
+    &@"23:59:59"
+    &(Datetime.isotime
+      &(Datetime.add-seconds
+        &(Datetime.init 2024
+                        1
+                        2
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        -1))
+    "subtract 1 second from 00:00:00")
+  (assert-equal test
+    &@"22:58:59"
+    &(Datetime.isotime
+      &(Datetime.add-seconds
+        &(Datetime.init 2024
+                        1
+                        2
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        -3661))
+    "subtract 3661 seconds (1h1m1s) from 00:00:00"))
