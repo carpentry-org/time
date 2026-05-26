@@ -618,4 +618,182 @@
                         (Maybe.Nothing)
                         (Maybe.Nothing))
         -3661))
-    "subtract 3661 seconds (1h1m1s) from 00:00:00"))
+    "subtract 3661 seconds (1h1m1s) from 00:00:00")
+
+  ; --- Datetime.diff ---
+  (assert-equal test
+    0
+    (Datetime.diff &(Datetime.date 2024 3 15) &(Datetime.date 2024 3 15))
+    "diff: same date is 0")
+  (assert-equal test
+    86400
+    (Datetime.diff &(Datetime.date 2024 3 16) &(Datetime.date 2024 3 15))
+    "diff: one day apart is 86400")
+  (assert-equal test
+    -86400
+    (Datetime.diff &(Datetime.date 2024 3 15) &(Datetime.date 2024 3 16))
+    "diff: reversed order is negative")
+  (assert-equal test
+    3600
+    (Datetime.diff
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 1)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing))
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "diff: one hour apart is 3600")
+  (assert-equal test
+    90061
+    (Datetime.diff
+      &(Datetime.init 2024
+                      3
+                      16
+                      (Maybe.Just 1)
+                      (Maybe.Just 1)
+                      (Maybe.Just 1)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing))
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "diff: 1 day 1 hour 1 minute 1 second = 90061")
+  (assert-equal test
+    (* 365 86400)
+    (Datetime.diff &(Datetime.date 2023 1 1) &(Datetime.date 2022 1 1))
+    "diff: non-leap year is 365 days")
+  (assert-equal test
+    (* 366 86400)
+    (Datetime.diff &(Datetime.date 2025 1 1) &(Datetime.date 2024 1 1))
+    "diff: leap year 2024 has 366 days")
+
+  ; --- Datetime.add-months ---
+  (assert-equal test
+    &(Datetime.date 2024 2 15)
+    &(Datetime.add-months &(Datetime.date 2024 1 15) 1)
+    "add-months: Jan to Feb")
+  (assert-equal test
+    &(Datetime.date 2024 2 29)
+    &(Datetime.add-months &(Datetime.date 2024 1 31) 1)
+    "add-months: Jan 31 to Feb 29 (leap year clamp)")
+  (assert-equal test
+    &(Datetime.date 2023 2 28)
+    &(Datetime.add-months &(Datetime.date 2023 1 31) 1)
+    "add-months: Jan 31 to Feb 28 (non-leap year clamp)")
+  (assert-equal test
+    &(Datetime.date 2024 4 30)
+    &(Datetime.add-months &(Datetime.date 2024 3 31) 1)
+    "add-months: Mar 31 to Apr 30 (30-day month clamp)")
+  (assert-equal test
+    &(Datetime.date 2025 1 15)
+    &(Datetime.add-months &(Datetime.date 2024 12 15) 1)
+    "add-months: Dec to Jan crosses year")
+  (assert-equal test
+    &(Datetime.date 2024 2 15)
+    &(Datetime.add-months &(Datetime.date 2024 3 15) -1)
+    "add-months: negative, Mar to Feb")
+  (assert-equal test
+    &(Datetime.date 2023 12 15)
+    &(Datetime.add-months &(Datetime.date 2024 1 15) -1)
+    "add-months: negative, Jan to Dec crosses year")
+  (assert-equal test
+    &(Datetime.date 2025 1 15)
+    &(Datetime.add-months &(Datetime.date 2024 1 15) 12)
+    "add-months: 12 months = 1 year")
+  (assert-equal test
+    &(Datetime.date 2022 1 15)
+    &(Datetime.add-months &(Datetime.date 2024 1 15) -24)
+    "add-months: -24 months = -2 years")
+  (assert-equal test
+    &(Datetime.date 2024 7 31)
+    &(Datetime.add-months &(Datetime.date 2024 5 31) 2)
+    "add-months: May 31 + 2 = Jul 31 (no clamp needed)")
+  (assert-equal test
+    &(Datetime.init 2024
+                    2
+                    15
+                    (Maybe.Just 10)
+                    (Maybe.Just 30)
+                    (Maybe.Just 45)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.add-months
+      &(Datetime.init 2024
+                      1
+                      15
+                      (Maybe.Just 10)
+                      (Maybe.Just 30)
+                      (Maybe.Just 45)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing))
+      1)
+    "add-months: preserves time components")
+
+  ; --- Datetime.add-years ---
+  (assert-equal test
+    &(Datetime.date 2025 3 15)
+    &(Datetime.add-years &(Datetime.date 2024 3 15) 1)
+    "add-years: simple +1")
+  (assert-equal test
+    &(Datetime.date 2025 2 28)
+    &(Datetime.add-years &(Datetime.date 2024 2 29) 1)
+    "add-years: Feb 29 to non-leap year clamps to 28")
+  (assert-equal test
+    &(Datetime.date 2028 2 29)
+    &(Datetime.add-years &(Datetime.date 2024 2 29) 4)
+    "add-years: Feb 29 to next leap year stays 29")
+  (assert-equal test
+    &(Datetime.date 2023 3 15)
+    &(Datetime.add-years &(Datetime.date 2024 3 15) -1)
+    "add-years: negative, -1 year")
+  (assert-equal test
+    &(Datetime.date 2023 2 28)
+    &(Datetime.add-years &(Datetime.date 2024 2 29) -1)
+    "add-years: Feb 29 backward to non-leap clamps to 28")
+  (assert-equal test
+    &(Datetime.date 2024 7 15)
+    &(Datetime.add-years &(Datetime.date 2024 7 15) 0)
+    "add-years: +0 is identity")
+  (assert-equal test
+    &(Datetime.date 1900 2 28)
+    &(Datetime.add-years &(Datetime.date 2000 2 29) -100)
+    "add-years: 2000 Feb 29 -100 to 1900 (not leap) clamps to 28")
+  (assert-equal test
+    &(Datetime.date 2400 2 29)
+    &(Datetime.add-years &(Datetime.date 2000 2 29) 400)
+    "add-years: 2000 Feb 29 +400 to 2400 (leap) stays 29")
+  (assert-equal test
+    &(Datetime.init 2025
+                    3
+                    15
+                    (Maybe.Just 14)
+                    (Maybe.Just 30)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.add-years
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 14)
+                      (Maybe.Just 30)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing))
+      1)
+    "add-years: preserves time components"))
