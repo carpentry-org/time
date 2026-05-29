@@ -917,7 +917,63 @@ optional ones.")
                   (/= sa sb) (< sa sb)
                   (< (Maybe.from @(nanoseconds a) 0)
                      (Maybe.from @(nanoseconds b) 0))))))))))
-  (implements < Datetime.<))
+  (implements < Datetime.<)
+
+  (doc diff "returns the signed difference in seconds between `a` and `b`.
+
+The result is positive when `a` is later than `b`, and negative when `a` is
+earlier. This is a timezone-unaware comparison, similar to `>` and `<`.")
+  (defn diff [a b]
+    (let [ord-a (to-ordinal a)
+          ord-b (to-ordinal b)
+          time-a (+ (* (Maybe.from @(hours a) 0) HOUR)
+                    (+ (* (Maybe.from @(minutes a) 0) MINUTE)
+                       (Maybe.from @(seconds a) 0)))
+          time-b (+ (* (Maybe.from @(hours b) 0) HOUR)
+                    (+ (* (Maybe.from @(minutes b) 0) MINUTE)
+                       (Maybe.from @(seconds b) 0)))]
+      (+ (* (- ord-a ord-b) DAY) (- time-a time-b))))
+
+  (doc add-months "adds `n` months to the `Datetime` `dt`.
+
+If the resulting month has fewer days than the original day, the day is clamped
+to the last day of the month. For example, adding 1 month to January 31 yields
+February 28 (or 29 in a leap year).
+
+`n` may be negative to subtract months.")
+  (defn add-months [dt n]
+    (let [total (+ (+ (* @(year dt) 12) (Int.dec @(month dt))) n)
+          new-year (div- total 12)
+          new-month (+ (mod- total 12) 1)
+          max-day (days-in-month new-year new-month)
+          new-day (min @(day dt) max-day)]
+      (init new-year
+            new-month
+            new-day
+            @(hours dt)
+            @(minutes dt)
+            @(seconds dt)
+            @(nanoseconds dt)
+            @(tz dt))))
+
+  (doc add-years "adds `n` years to the `Datetime` `dt`.
+
+If the date is February 29 and the resulting year is not a leap year, the day is
+clamped to February 28.
+
+`n` may be negative to subtract years.")
+  (defn add-years [dt n]
+    (let [new-year (+ @(year dt) n)
+          max-day (days-in-month new-year @(month dt))
+          new-day (min @(day dt) max-day)]
+      (init new-year
+            @(month dt)
+            new-day
+            @(hours dt)
+            @(minutes dt)
+            @(seconds dt)
+            @(nanoseconds dt)
+            @(tz dt)))))
 
 (deftype Timedelta [seconds- Int])
 
