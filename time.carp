@@ -313,10 +313,9 @@ If `n` is negative, it will be subtracted instead.")
               366
               365))]
       (+ (* yy DAY)
-         (+
-           (* @(Array.unsafe-nth &DAYS-BEFORE-MONTH m) DAY)
-           (+ (* (Int.dec d) DAY)
-              (+ (* hh HOUR) (+ (* mm MINUTE) (+ (Long.to-int delta) ss))))))))
+         (+ (* (days-before-month y m) DAY)
+            (+ (* (Int.dec d) DAY)
+               (+ (* hh HOUR) (+ (* mm MINUTE) (+ (Long.to-int delta) ss))))))))
 
   (doc to-unix-timestamp "returns the representation of the `Datetime` `dt` as
 a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,

@@ -230,6 +230,27 @@
                         (Maybe.Nothing)
                         (Maybe.Nothing))))
     "from-unix-timestamp round-trips Feb 29 in leap year")
+  ; March 1 leap year round-trip (month >= 3 needs leap-day offset in to-unix)
+  (assert-equal test
+    &(Datetime.init 1972
+                    3
+                    1
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp
+      (Datetime.to-unix-timestamp
+        &(Datetime.init 1972
+                        3
+                        1
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))))
+    "from-unix-timestamp round-trips March 1 in leap year")
 
   ; --- Datetime.add-seconds ---
   (assert-equal test
