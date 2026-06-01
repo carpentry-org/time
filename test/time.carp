@@ -186,20 +186,71 @@
     "different dates are not equal")
 
   ; --- Datetime.to-unix-timestamp / from-unix-timestamp ---
-  ; NOTE: to-unix-timestamp and from-unix-timestamp have pre-existing bugs
-  ; (out-of-bounds array access). Tests are skipped until the library is fixed.
-  ; (assert-equal test
-  ;               0
-  ;               (Datetime.to-unix-timestamp &(Datetime.init 1970 1 1
-  ;                   (Maybe.Just 0) (Maybe.Just 0) (Maybe.Just 0)
-  ;                   (Maybe.Nothing) (Maybe.Nothing)))
-  ;               "unix epoch is timestamp 0")
-  ; (assert-equal test
-  ;               &(Datetime.init 1970 1 1
-  ;                   (Maybe.Just 0) (Maybe.Just 0) (Maybe.Just 0)
-  ;                   (Maybe.Nothing) (Maybe.Nothing))
-  ;               &(Datetime.from-unix-timestamp 0)
-  ;               "from-unix-timestamp 0 is epoch")
+  (assert-equal test
+    0
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 1970
+                      1
+                      1
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "unix epoch is timestamp 0")
+  (assert-equal test
+    &(Datetime.init 1970
+                    1
+                    1
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 0)
+    "from-unix-timestamp 0 is epoch")
+  ; Feb 29 leap year round-trip (1972 is a leap year, ts = 68169600)
+  (assert-equal test
+    &(Datetime.init 1972
+                    2
+                    29
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp
+      (Datetime.to-unix-timestamp
+        &(Datetime.init 1972
+                        2
+                        29
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))))
+    "from-unix-timestamp round-trips Feb 29 in leap year")
+  ; March 1 leap year round-trip (month >= 3 needs leap-day offset in to-unix)
+  (assert-equal test
+    &(Datetime.init 1972
+                    3
+                    1
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp
+      (Datetime.to-unix-timestamp
+        &(Datetime.init 1972
+                        3
+                        1
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))))
+    "from-unix-timestamp round-trips March 1 in leap year")
 
   ; --- Datetime.add-seconds ---
   (assert-equal test
