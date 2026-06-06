@@ -45,13 +45,13 @@
 formatted using <code>strftime</code>, and parsed using <code>strptime</code>. Both mimic
 <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
 <p>Formatting example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.2.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.0&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
 </code></pre>
 <p>Parsing example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.2.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.0&quot;)
 
 (defn main []
   (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
@@ -122,6 +122,30 @@ optional ones.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#add-months">
+                        <h3 id="add-months">
+                            add-months
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), Int] Datetime)
+                    </p>
+                    <pre class="args">
+                        (add-months dt n)
+                    </pre>
+                    <p class="doc">
+                        <p>adds <code>n</code> months to the <code>Datetime</code> <code>dt</code>.</p>
+<p>If the resulting month has fewer days than the original day, the day is clamped
+to the last day of the month. For example, adding 1 month to January 31 yields
+February 28 (or 29 in a leap year).</p>
+<p><code>n</code> may be negative to subtract months.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#add-seconds">
                         <h3 id="add-seconds">
                             add-seconds
@@ -139,6 +163,29 @@ optional ones.</p>
                     <p class="doc">
                         <p>adds a number of seconds <code>n</code> to a <code>Datetime</code>.</p>
 <p>If <code>n</code> is negative, it will be subtracted instead.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#add-years">
+                        <h3 id="add-years">
+                            add-years
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), Int] Datetime)
+                    </p>
+                    <pre class="args">
+                        (add-years dt n)
+                    </pre>
+                    <p class="doc">
+                        <p>adds <code>n</code> years to the <code>Datetime</code> <code>dt</code>.</p>
+<p>If the date is February 29 and the resulting year is not a leap year, the day is
+clamped to February 28.</p>
+<p><code>n</code> may be negative to subtract years.</p>
 
                     </p>
                 </div>
@@ -220,6 +267,28 @@ it.</p>
                     </span>
                     <p class="doc">
                         <p>deletes a <code>Datetime</code>. Should usually not be called manually.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#diff">
+                        <h3 id="diff">
+                            diff
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Datetime b)] Int)
+                    </p>
+                    <pre class="args">
+                        (diff a b)
+                    </pre>
+                    <p class="doc">
+                        <p>returns the signed difference in seconds between <code>a</code> and <code>b</code>.</p>
+<p>The result is positive when <code>a</code> is later than <code>b</code>, and negative when <code>a</code> is
+earlier. This is a timezone-unaware comparison, similar to <code>&gt;</code> and <code>&lt;</code>.</p>
 
                     </p>
                 </div>
@@ -1225,8 +1294,9 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
                         (utc? dt)
                     </pre>
                     <p class="doc">
-                        <p>checks whether the timezone of the <code>Datetime</code> <code>dt</code> is UTC. It will
-also return true if the timezone is not set.</p>
+                        <p>checks whether the timezone of the <code>Datetime</code> <code>dt</code> is UTC. The
+timezone name comparison is case-insensitive. It will also return true if the
+timezone is not set.</p>
 
                     </p>
                 </div>

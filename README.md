@@ -5,7 +5,7 @@ A lightweight time library and datatype for Carp.
 ## Installation
 
 ```clojure
-(load "git@github.com:carpentry-org/time@0.2.0")
+(load "git@github.com:carpentry-org/time@0.3.0")
 ```
 
 ## Usage
