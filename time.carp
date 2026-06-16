@@ -488,7 +488,7 @@ Example:
                 (fmt "%s%02d%02d"
                      (if (< d 0l) "-" "+")
                      (Long.abs (/ d s))
-                     (mod d s)))
+                     (/ (Long.abs (mod d s)) 60l)))
             (Maybe.Nothing) @"")
           \Z
           @(Timezone.name &(Maybe.from @(tz dt) (Timezone.zero)))

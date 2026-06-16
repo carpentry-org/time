@@ -340,6 +340,47 @@
     &(Datetime.strftime &(Datetime.date 2024 3 15) "%B")
     "strftime %B full month")
 
+  ; --- Datetime.strftime %z ---
+  (assert-equal test
+    &@"+0530"
+    &(Datetime.strftime
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 14)
+                      (Maybe.Just 30)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Just (Timezone.init @"IST" 19800l false)))
+      "%z")
+    "strftime %z formats half-hour offset correctly")
+  (assert-equal test
+    &@"-0800"
+    &(Datetime.strftime
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 6)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Just (Timezone.init @"PST" -28800l false)))
+      "%z")
+    "strftime %z formats negative whole-hour offset")
+  (assert-equal test
+    &@"+0000"
+    &(Datetime.strftime
+      &(Datetime.init 2024
+                      3
+                      15
+                      (Maybe.Just 12)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Just @&Timezone.utc))
+      "%z")
+    "strftime %z formats UTC as +0000")
+
   ; --- Datetime.> and Datetime.< ---
   (assert-true test
     (> &(Datetime.date 2024 3 16) &(Datetime.date 2024 3 15))
