@@ -312,7 +312,7 @@ If `n` is negative, it will be subtracted instead.")
     (let [yy (if (<= y 1970)
             0
             (for-year
-              &(Result.unsafe-from-success (Array.range 1970 (Int.dec y) 1))
+              &(Result.from-success (Array.range 1970 (Int.dec y) 1) [])
               366
               365))]
       (+ (* yy DAY)
@@ -351,7 +351,7 @@ timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
           ld (if (<= y 0)
             0
             (for-year
-              &(Result.unsafe-from-success (Array.range 1970 (+ y 1969) 1))
+              &(Result.from-success (Array.range 1970 (+ y 1969) 1) [])
               1
               0))
           d (- (- (/ ts DAY) (* y 365)) ld)
@@ -436,13 +436,14 @@ Example:
   (defn strftime [dt s]
     (let [strings (String.split-by s &[\%])
           ln (Int.dec (Array.length &strings))
-          rng (Result.unsafe-from-success (Array.range 0 ln 1))]
+          rng (Result.from-success (Array.range 0 ln 1) [])]
       (String.concat
         &(Array.zip
           &(fn [x i]
-            (if (and (String.empty? x) (or (= i &0) (= i &ln)))
-              @""
-              (if (String.empty? x) @"%" (format &(String.concat &[@"%" @x]) dt))))
+            (cond
+              (and (String.empty? x) (or (= i &0) (= i &ln))) @""
+              (String.empty? x) @"%"
+              (format &(String.concat &[@"%" @x]) dt)))
           &strings
           &rng))))
 
@@ -642,227 +643,232 @@ Example:
              ok true]
       (while (and ok (< fpos flen))
         (let [fc (String.char-at &efmt fpos)]
-          (if (and (= fc \%) (< (+ fpos 1) flen))
-            (let [spec (String.char-at &efmt (+ fpos 1))]
-              (case spec
-                    \Y
-                    (match (parse-digits input ipos 4)
-                      (Maybe.Just v)
-                        (do
-                          (set! yr v)
-                          (set! ipos (+ ipos 4))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %Y") (set! ok false)))
-                    \y
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! yr (if (< v 69) (+ v 2000) (+ v 1900)))
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %y") (set! ok false)))
-                    \m
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! mo v)
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %m") (set! ok false)))
-                    \d
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! dy v)
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %d") (set! ok false)))
-                    \H
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! hr v)
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %H") (set! ok false)))
-                    \I
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! hr v)
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %I") (set! ok false)))
-                    \p
-                    (if (> (+ ipos 2) ilen)
-                      (do (set! err @"failed to parse %p") (set! ok false))
-                      (let [sub (String.suffix input ipos)
-                            tok (String.prefix &sub 2)]
-                        (if (= &tok "AM")
+          (cond
+            (and (= fc \%) (< (+ fpos 1) flen))
+              (let [spec (String.char-at &efmt (+ fpos 1))]
+                (case spec
+                      \Y
+                      (match (parse-digits input ipos 4)
+                        (Maybe.Just v)
                           (do
-                            (set! ampm 1)
+                            (set! yr v)
+                            (set! ipos (+ ipos 4))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %Y") (set! ok false)))
+                      \y
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! yr (if (< v 69) (+ v 2000) (+ v 1900)))
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                          (if (= &tok "PM")
-                            (do
-                              (set! ampm 2)
-                              (set! ipos (+ ipos 2))
-                              (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %y") (set! ok false)))
+                      \m
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! mo v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %m") (set! ok false)))
+                      \d
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! dy v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %d") (set! ok false)))
+                      \H
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! hr v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %H") (set! ok false)))
+                      \I
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! hr v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %I") (set! ok false)))
+                      \p
+                      (if (> (+ ipos 2) ilen)
+                        (do (set! err @"failed to parse %p") (set! ok false))
+                        (let [sub (String.suffix input ipos)
+                              tok (String.prefix &sub 2)]
+                          (cond
+                            (= &tok "AM")
+                              (do
+                                (set! ampm 1)
+                                (set! ipos (+ ipos 2))
+                                (set! fpos (+ fpos 2)))
+                            (= &tok "PM")
+                              (do
+                                (set! ampm 2)
+                                (set! ipos (+ ipos 2))
+                                (set! fpos (+ fpos 2)))
                             (do
                               (set! err @"failed to parse %p: expected AM or PM")
-                              (set! ok false))))))
-                    \M
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! mi v)
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %M") (set! ok false)))
-                    \S
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do
-                          (set! sc v)
-                          (set! ipos (+ ipos 2))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %S") (set! ok false)))
-                    \n
-                    (match (parse-digits input ipos 9)
-                      (Maybe.Just v)
-                        (do
-                          (set! ns v)
-                          (set! ipos (+ ipos 9))
-                          (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %n") (set! ok false)))
-                    \b
-                    (let [idx (match-short-in-array &MONTH-STRINGS input ipos)]
-                      (if (> idx 0)
-                        (do
-                          (set! mo idx)
-                          (set! ipos (+ ipos 3))
-                          (set! fpos (+ fpos 2)))
-                        (do (set! err @"failed to parse %b") (set! ok false))))
-                    \B
-                    (let [idx (match-in-array &MONTH-STRINGS input ipos)]
-                      (if (> idx 0)
-                        (do
-                          (set! mo idx)
-                          (set! ipos
-                                (+ ipos
-                                   (String.length (Array.unsafe-nth &MONTH-STRINGS
-                                                                    idx))))
-                          (set! fpos (+ fpos 2)))
-                        (do (set! err @"failed to parse %B") (set! ok false))))
-                    \a
-                    (let [idx (match-short-in-array &WEEKDAY-STRINGS input ipos)]
-                      (if (> idx 0)
-                        (do (set! ipos (+ ipos 3)) (set! fpos (+ fpos 2)))
-                        (do (set! err @"failed to parse %a") (set! ok false))))
-                    \A
-                    (let [idx (match-in-array &WEEKDAY-STRINGS input ipos)]
-                      (if (> idx 0)
-                        (do
-                          (set! ipos
-                                (+ ipos
-                                   (String.length (Array.unsafe-nth &WEEKDAY-STRINGS
-                                                                    idx))))
-                          (set! fpos (+ fpos 2)))
-                        (do (set! err @"failed to parse %A") (set! ok false))))
-                    \w
-                    (match (parse-digits input ipos 1)
-                      (Maybe.Just v)
+                              (set! ok false)))))
+                      \M
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! mi v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %M") (set! ok false)))
+                      \S
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do
+                            (set! sc v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %S") (set! ok false)))
+                      \n
+                      (match (parse-digits input ipos 9)
+                        (Maybe.Just v)
+                          (do
+                            (set! ns v)
+                            (set! ipos (+ ipos 9))
+                            (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %n") (set! ok false)))
+                      \b
+                      (let [idx (match-short-in-array &MONTH-STRINGS input ipos)]
+                        (if (> idx 0)
+                          (do
+                            (set! mo idx)
+                            (set! ipos (+ ipos 3))
+                            (set! fpos (+ fpos 2)))
+                          (do (set! err @"failed to parse %b") (set! ok false))))
+                      \B
+                      (let [idx (match-in-array &MONTH-STRINGS input ipos)]
+                        (if (> idx 0)
+                          (do
+                            (set! mo idx)
+                            (set! ipos
+                                  (+ ipos
+                                     (String.length (Array.unsafe-nth &MONTH-STRINGS
+                                                                      idx))))
+                            (set! fpos (+ fpos 2)))
+                          (do (set! err @"failed to parse %B") (set! ok false))))
+                      \a
+                      (let [idx (match-short-in-array &WEEKDAY-STRINGS
+                                                      input
+                                                      ipos)]
+                        (if (> idx 0)
+                          (do (set! ipos (+ ipos 3)) (set! fpos (+ fpos 2)))
+                          (do (set! err @"failed to parse %a") (set! ok false))))
+                      \A
+                      (let [idx (match-in-array &WEEKDAY-STRINGS input ipos)]
+                        (if (> idx 0)
+                          (do
+                            (set! ipos
+                                  (+ ipos
+                                     (String.length (Array.unsafe-nth &WEEKDAY-STRINGS
+                                                                      idx))))
+                            (set! fpos (+ fpos 2)))
+                          (do (set! err @"failed to parse %A") (set! ok false))))
+                      \w
+                      (match (parse-digits input ipos 1)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %w") (set! ok false)))
+                      \j
+                      (match (parse-digits input ipos 3)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 3)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %j") (set! ok false)))
+                      \U
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %U") (set! ok false)))
+                      \W
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %W") (set! ok false)))
+                      \z
+                      (if (> (+ ipos 5) ilen)
+                        (do (set! err @"failed to parse %z") (set! ok false))
+                        (let [sign-c (String.char-at input ipos)]
+                          (if (or (= sign-c \+) (= sign-c \-))
+                            (match (parse-digits input (+ ipos 1) 2)
+                              (Maybe.Just zh)
+                                (match (parse-digits input (+ ipos 3) 2)
+                                  (Maybe.Just zm)
+                                    (let-do [sign-mult (if (= sign-c \-) -1l 1l)]
+                                      (set! tz-delta
+                                            (* sign-mult
+                                               (+ (* (Long.from-int zh) 3600l)
+                                                  (* (Long.from-int zm) 60l))))
+                                      (set! has-tz true)
+                                      (set! ipos (+ ipos 5))
+                                      (set! fpos (+ fpos 2)))
+                                  (Maybe.Nothing)
+                                    (do
+                                      (set! err @"failed to parse %z")
+                                      (set! ok false)))
+                              (Maybe.Nothing)
+                                (do
+                                  (set! err @"failed to parse %z")
+                                  (set! ok false)))
+                            (do (set! err @"failed to parse %z") (set! ok false)))))
+                      \Z
+                      (let-do [n 0]
+                        (while (and (< (+ ipos n) ilen)
+                                    (let [c (String.char-at input (+ ipos n))]
+                                      (or (and (>= c \A) (<= c \Z))
+                                          (and (>= c \a) (<= c \z)))))
+                          (set! n (+ n 1)))
+                        (if (> n 0)
+                          (let-do [sub (String.suffix input ipos)
+                                   nm (String.prefix &sub n)]
+                            (set! tz-nm nm)
+                            (set! has-tz true)
+                            (set! ipos (+ ipos n))
+                            (set! fpos (+ fpos 2)))
+                          (do (set! err @"failed to parse %Z") (set! ok false))))
+                      \%
+                      (if (and (< ipos ilen) (= \% (String.char-at input ipos)))
                         (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %w") (set! ok false)))
-                    \j
-                    (match (parse-digits input ipos 3)
-                      (Maybe.Just v)
-                        (do (set! ipos (+ ipos 3)) (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %j") (set! ok false)))
-                    \U
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %U") (set! ok false)))
-                    \W
-                    (match (parse-digits input ipos 2)
-                      (Maybe.Just v)
-                        (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
-                      (Maybe.Nothing)
-                        (do (set! err @"failed to parse %W") (set! ok false)))
-                    \z
-                    (if (> (+ ipos 5) ilen)
-                      (do (set! err @"failed to parse %z") (set! ok false))
-                      (let [sign-c (String.char-at input ipos)]
-                        (if (or (= sign-c \+) (= sign-c \-))
-                          (match (parse-digits input (+ ipos 1) 2)
-                            (Maybe.Just zh)
-                              (match (parse-digits input (+ ipos 3) 2)
-                                (Maybe.Just zm)
-                                  (let-do [sign-mult (if (= sign-c \-) -1l 1l)]
-                                    (set! tz-delta
-                                          (* sign-mult
-                                             (+ (* (Long.from-int zh) 3600l)
-                                                (* (Long.from-int zm) 60l))))
-                                    (set! has-tz true)
-                                    (set! ipos (+ ipos 5))
-                                    (set! fpos (+ fpos 2)))
-                                (Maybe.Nothing)
-                                  (do
-                                    (set! err @"failed to parse %z")
-                                    (set! ok false)))
-                            (Maybe.Nothing)
-                              (do
-                                (set! err @"failed to parse %z")
-                                (set! ok false)))
-                          (do (set! err @"failed to parse %z") (set! ok false)))))
-                    \Z
-                    (let-do [n 0]
-                      (while (and (< (+ ipos n) ilen)
-                                  (let [c (String.char-at input (+ ipos n))]
-                                    (or (and (>= c \A) (<= c \Z))
-                                        (and (>= c \a) (<= c \z)))))
-                        (set! n (+ n 1)))
-                      (if (> n 0)
-                        (let-do [sub (String.suffix input ipos)
-                                 nm (String.prefix &sub n)]
-                          (set! tz-nm nm)
-                          (set! has-tz true)
-                          (set! ipos (+ ipos n))
-                          (set! fpos (+ fpos 2)))
-                        (do (set! err @"failed to parse %Z") (set! ok false))))
-                    \%
-                    (if (and (< ipos ilen) (= \% (String.char-at input ipos)))
-                      (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 2)))
-                      (do (set! err @"failed to parse %%") (set! ok false)))
-                    (do
-                      (set! err
-                            (String.concat
-                              &[@"unknown format specifier: %" (str spec)]))
-                      (set! ok false))))
-            (if (and (< ipos ilen) (= fc (String.char-at input ipos)))
+                        (do (set! err @"failed to parse %%") (set! ok false)))
+                      (do
+                        (set! err
+                              (String.concat
+                                &[@"unknown format specifier: %" (str spec)]))
+                        (set! ok false))))
+            (and (< ipos ilen) (= fc (String.char-at input ipos)))
               (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 1)))
-              (do
-                (set! err
-                      (String.concat
-                        &[@"unexpected character at position " (Int.str ipos)]))
-                (set! ok false))))))
+            (do
+              (set! err
+                    (String.concat
+                      &[@"unexpected character at position " (Int.str ipos)]))
+              (set! ok false)))))
       (if ok
-        (let [final-hr (if (= ampm 2)
-                (if (< hr 12) (+ hr 12) hr)
-                (if (= ampm 1) (if (= hr 12) 0 hr) hr))
+        (let [final-hr (cond
+                (= ampm 2) (if (< hr 12) (+ hr 12) hr)
+                (= ampm 1) (if (= hr 12) 0 hr)
+                hr)
               hours-val (if (= final-hr -1)
                 (Maybe.Nothing)
                 (Maybe.Just final-hr))
@@ -898,16 +904,16 @@ optional ones.")
       (/= @(day a) @(day b)) (> @(day a) @(day b))
       (let [ha (Maybe.from @(hours a) 0)
             hb (Maybe.from @(hours b) 0)]
-        (cond
-          (/= ha hb) (> ha hb)
+        (if (/= ha hb)
+          (> ha hb)
           (let [ma (Maybe.from @(minutes a) 0)
                 mb (Maybe.from @(minutes b) 0)]
-            (cond
-              (/= ma mb) (> ma mb)
+            (if (/= ma mb)
+              (> ma mb)
               (let [sa (Maybe.from @(seconds a) 0)
                     sb (Maybe.from @(seconds b) 0)]
-                (cond
-                  (/= sa sb) (> sa sb)
+                (if (/= sa sb)
+                  (> sa sb)
                   (> (Maybe.from @(nanoseconds a) 0)
                      (Maybe.from @(nanoseconds b) 0))))))))))
   (implements > Datetime.>)
@@ -920,16 +926,16 @@ optional ones.")
       (/= @(day a) @(day b)) (< @(day a) @(day b))
       (let [ha (Maybe.from @(hours a) 0)
             hb (Maybe.from @(hours b) 0)]
-        (cond
-          (/= ha hb) (< ha hb)
+        (if (/= ha hb)
+          (< ha hb)
           (let [ma (Maybe.from @(minutes a) 0)
                 mb (Maybe.from @(minutes b) 0)]
-            (cond
-              (/= ma mb) (< ma mb)
+            (if (/= ma mb)
+              (< ma mb)
               (let [sa (Maybe.from @(seconds a) 0)
                     sb (Maybe.from @(seconds b) 0)]
-                (cond
-                  (/= sa sb) (< sa sb)
+                (if (/= sa sb)
+                  (< sa sb)
                   (< (Maybe.from @(nanoseconds a) 0)
                      (Maybe.from @(nanoseconds b) 0))))))))))
   (implements < Datetime.<)

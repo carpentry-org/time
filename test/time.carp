@@ -471,91 +471,90 @@
   ; 2-digit year
   (assert-equal test
     2024
-    @(Datetime.year
-      &(Result.unsafe-from-success (Datetime.strptime "24-03-15" "%y-%m-%d")))
+    (match (Datetime.strptime "24-03-15" "%y-%m-%d")
+      (Result.Success dt) @(Datetime.year &dt)
+      (Result.Error _) -1)
     "strptime %y parses 24 as 2024")
   (assert-equal test
     1999
-    @(Datetime.year
-      &(Result.unsafe-from-success (Datetime.strptime "99-01-01" "%y-%m-%d")))
+    (match (Datetime.strptime "99-01-01" "%y-%m-%d")
+      (Result.Success dt) @(Datetime.year &dt)
+      (Result.Error _) -1)
     "strptime %y parses 99 as 1999")
 
   ; abbreviated month name
   (assert-equal test
     3
-    @(Datetime.month
-      &(Result.unsafe-from-success (Datetime.strptime "15 Mar 2024" "%d %b %Y")))
+    (match (Datetime.strptime "15 Mar 2024" "%d %b %Y")
+      (Result.Success dt) @(Datetime.month &dt)
+      (Result.Error _) -1)
     "strptime %b parses abbreviated month")
 
   ; full month name
   (assert-equal test
     3
-    @(Datetime.month
-      &(Result.unsafe-from-success
-        (Datetime.strptime "March 15, 2024" "%B %d, %Y")))
+    (match (Datetime.strptime "March 15, 2024" "%B %d, %Y")
+      (Result.Success dt) @(Datetime.month &dt)
+      (Result.Error _) -1)
     "strptime %B parses full month name")
 
   ; 12h time with AM/PM
   (assert-equal test
     14
-    (Maybe.from
-      @(Datetime.hours
-        &(Result.unsafe-from-success (Datetime.strptime "02:30 PM" "%I:%M %p")))
-      0)
+    (match (Datetime.strptime "02:30 PM" "%I:%M %p")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) 0)
+      (Result.Error _) -1)
     "strptime %I %p parses 02 PM as 14")
   (assert-equal test
     2
-    (Maybe.from
-      @(Datetime.hours
-        &(Result.unsafe-from-success (Datetime.strptime "02:30 AM" "%I:%M %p")))
-      0)
+    (match (Datetime.strptime "02:30 AM" "%I:%M %p")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) 0)
+      (Result.Error _) -1)
     "strptime %I %p parses 02 AM as 2")
   (assert-equal test
     0
-    (Maybe.from
-      @(Datetime.hours
-        &(Result.unsafe-from-success (Datetime.strptime "12:00 AM" "%I:%M %p")))
-      -1)
+    (match (Datetime.strptime "12:00 AM" "%I:%M %p")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) -1)
+      (Result.Error _) -2)
     "strptime %I %p parses 12 AM as 0")
   (assert-equal test
     12
-    (Maybe.from
-      @(Datetime.hours
-        &(Result.unsafe-from-success (Datetime.strptime "12:00 PM" "%I:%M %p")))
-      -1)
+    (match (Datetime.strptime "12:00 PM" "%I:%M %p")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) -1)
+      (Result.Error _) -2)
     "strptime %I %p parses 12 PM as 12")
 
   ; nanoseconds
   (assert-equal test
     123456789
-    (Maybe.from
-      @(Datetime.nanoseconds
-        &(Result.unsafe-from-success
-          (Datetime.strptime "14:30:00.123456789" "%H:%M:%S.%n")))
-      0)
+    (match (Datetime.strptime "14:30:00.123456789" "%H:%M:%S.%n")
+      (Result.Success dt) (Maybe.from @(Datetime.nanoseconds &dt) 0)
+      (Result.Error _) -1)
     "strptime %n parses nanoseconds")
 
   ; timezone offset
   (assert-true test
-    (let [dt (Result.unsafe-from-success
-            (Datetime.strptime "2024-03-15 14:30:00 +0530"
-                               "%Y-%m-%d %H:%M:%S %z"))]
-      (= 19800l
-         @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero)))))
+    (match (Datetime.strptime "2024-03-15 14:30:00 +0530" "%Y-%m-%d %H:%M:%S %z")
+      (Result.Success dt)
+        (= 19800l
+           @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero))))
+      (Result.Error _) false)
     "strptime %z parses +0530 offset")
   (assert-true test
-    (let [dt (Result.unsafe-from-success
-            (Datetime.strptime "2024-03-15 14:30:00 -0800"
-                               "%Y-%m-%d %H:%M:%S %z"))]
-      (= -28800l
-         @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero)))))
+    (match (Datetime.strptime "2024-03-15 14:30:00 -0800" "%Y-%m-%d %H:%M:%S %z")
+      (Result.Success dt)
+        (= -28800l
+           @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero))))
+      (Result.Error _) false)
     "strptime %z parses -0800 offset")
 
   ; timezone name
   (assert-true test
-    (let [dt (Result.unsafe-from-success
-            (Datetime.strptime "2024-03-15 UTC" "%Y-%m-%d %Z"))]
-      (= "UTC" (Timezone.name &(Maybe.from @(Datetime.tz &dt) (Timezone.zero)))))
+    (match (Datetime.strptime "2024-03-15 UTC" "%Y-%m-%d %Z")
+      (Result.Success dt)
+        (= "UTC"
+           (Timezone.name &(Maybe.from @(Datetime.tz &dt) (Timezone.zero))))
+      (Result.Error _) false)
     "strptime %Z parses timezone name")
 
   ; abbreviated weekday (parsed and discarded)
@@ -585,24 +584,21 @@
   ; compound format %X (ISO time)
   (assert-equal test
     14
-    (Maybe.from
-      @(Datetime.hours
-        &(Result.unsafe-from-success (Datetime.strptime "14:30:45" "%X")))
-      0)
+    (match (Datetime.strptime "14:30:45" "%X")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) 0)
+      (Result.Error _) -1)
     "strptime %X parses ISO time hours")
   (assert-equal test
     30
-    (Maybe.from
-      @(Datetime.minutes
-        &(Result.unsafe-from-success (Datetime.strptime "14:30:45" "%X")))
-      0)
+    (match (Datetime.strptime "14:30:45" "%X")
+      (Result.Success dt) (Maybe.from @(Datetime.minutes &dt) 0)
+      (Result.Error _) -1)
     "strptime %X parses ISO time minutes")
   (assert-equal test
     45
-    (Maybe.from
-      @(Datetime.seconds
-        &(Result.unsafe-from-success (Datetime.strptime "14:30:45" "%X")))
-      0)
+    (match (Datetime.strptime "14:30:45" "%X")
+      (Result.Success dt) (Maybe.from @(Datetime.seconds &dt) 0)
+      (Result.Error _) -1)
     "strptime %X parses ISO time seconds")
 
   ; compound format %c (locale datetime)
@@ -621,27 +617,27 @@
 
   ; %c roundtrip with strftime
   (assert-equal test
-    &(Datetime.init 2024
-                    3
-                    15
-                    (Maybe.Just 14)
-                    (Maybe.Just 30)
-                    (Maybe.Just 45)
-                    (Maybe.Nothing)
-                    (Maybe.Nothing))
-    &(Result.unsafe-from-success
-      (Datetime.strptime
-        &(Datetime.strftime
-          &(Datetime.init 2024
-                          3
-                          15
-                          (Maybe.Just 14)
-                          (Maybe.Just 30)
-                          (Maybe.Just 45)
-                          (Maybe.Nothing)
-                          (Maybe.Nothing))
-          "%c")
-        "%c"))
+    &(Result.Success
+      (Datetime.init 2024
+                     3
+                     15
+                     (Maybe.Just 14)
+                     (Maybe.Just 30)
+                     (Maybe.Just 45)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)))
+    &(Datetime.strptime
+      &(Datetime.strftime
+        &(Datetime.init 2024
+                        3
+                        15
+                        (Maybe.Just 14)
+                        (Maybe.Just 30)
+                        (Maybe.Just 45)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        "%c")
+      "%c")
     "strptime %c roundtrips with strftime")
 
   ; error on bad input
@@ -654,34 +650,33 @@
 
   ; roundtrip: format then parse
   (assert-equal test
-    &(Datetime.date 2024 3 15)
-    &(Result.unsafe-from-success
-      (Datetime.strptime
-        &(Datetime.strftime &(Datetime.date 2024 3 15) "%Y-%m-%d")
-        "%Y-%m-%d"))
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime
+      &(Datetime.strftime &(Datetime.date 2024 3 15) "%Y-%m-%d")
+      "%Y-%m-%d")
     "strptime roundtrips with strftime for date")
   (assert-equal test
-    &(Datetime.init 2024
-                    3
-                    15
-                    (Maybe.Just 14)
-                    (Maybe.Just 30)
-                    (Maybe.Just 45)
-                    (Maybe.Nothing)
-                    (Maybe.Nothing))
-    &(Result.unsafe-from-success
-      (Datetime.strptime
-        &(Datetime.strftime
-          &(Datetime.init 2024
-                          3
-                          15
-                          (Maybe.Just 14)
-                          (Maybe.Just 30)
-                          (Maybe.Just 45)
-                          (Maybe.Nothing)
-                          (Maybe.Nothing))
-          "%Y-%m-%d %H:%M:%S")
-        "%Y-%m-%d %H:%M:%S"))
+    &(Result.Success
+      (Datetime.init 2024
+                     3
+                     15
+                     (Maybe.Just 14)
+                     (Maybe.Just 30)
+                     (Maybe.Just 45)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)))
+    &(Datetime.strptime
+      &(Datetime.strftime
+        &(Datetime.init 2024
+                        3
+                        15
+                        (Maybe.Just 14)
+                        (Maybe.Just 30)
+                        (Maybe.Just 45)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        "%Y-%m-%d %H:%M:%S")
+      "%Y-%m-%d %H:%M:%S")
     "strptime roundtrips with strftime for datetime")
 
   ; --- Datetime comparison operators ---
