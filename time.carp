@@ -1,8 +1,5 @@
 (relative-include "datetime.h")
 
-(doc Timezone "represents a timezone with a name, an offset from UTC in
-seconds (`delta`), and a flag indicating whether daylight saving time is in
-effect (`dst?`).")
 (deftype Timezone [name String
                    delta Long
                    dst? Bool])
@@ -240,7 +237,7 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (hidden div-)
   (defn div- [a n] (to-int (floor (/ (Double.from-int a) (Double.from-int n)))))
 
-  ; weird mod for our purposes (behaves more or less like in Python)
+  ; modulo paired with floor division (Python-style, sign follows divisor)
   (hidden mod-)
   (defn mod- [a n] (- a (* n (div- a n))))
 
