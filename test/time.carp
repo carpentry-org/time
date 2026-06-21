@@ -55,7 +55,6 @@
     &(Datetime.from-ordinal 1)
     "from-ordinal of 1 is 0001-01-01")
 
-  ; 2024-03-15 is a Friday
   (assert-equal test
     4
     (Datetime.weekday &(Datetime.date 2024 3 15))
@@ -64,7 +63,6 @@
     5
     (Datetime.isoweekday &(Datetime.date 2024 3 15))
     "2024-03-15 is isoweekday 5 (Friday)")
-  ; 2024-03-18 is a Monday
   (assert-equal test
     0
     (Datetime.weekday &(Datetime.date 2024 3 18))
