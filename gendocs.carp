@@ -21,7 +21,7 @@ weeks from those times.
 
 ### Formatting
 ```
-(load \"git@github.com:carpentry-org/time@0.3.0\")
+(load \"git@github.com:carpentry-org/time@0.3.1\")
 
 (defn main []
   (println*
@@ -32,7 +32,7 @@ weeks from those times.
 
 ### Parsing
 ```
-(load \"git@github.com:carpentry-org/time@0.3.0\")
+(load \"git@github.com:carpentry-org/time@0.3.1\")
 
 (defn main []
   (match (Datetime.strptime \"2024-03-15 14:30:00\" \"%Y-%m-%d %H:%M:%S\")

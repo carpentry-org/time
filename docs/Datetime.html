@@ -45,13 +45,13 @@
 formatted using <code>strftime</code>, and parsed using <code>strptime</code>. Both mimic
 <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
 <p>Formatting example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.1&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
 </code></pre>
 <p>Parsing example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.1&quot;)
 
 (defn main []
   (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
