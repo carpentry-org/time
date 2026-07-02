@@ -206,8 +206,7 @@ it.")
 
   (doc yearday "returns the day of the year of the `Datetime` `dt` as a number
 in the range of `1` to `365` or `366`, depending on whether it’s a leap year.")
-  (defn yearday [dt]
-    (+ @(Array.unsafe-nth &DAYS-BEFORE-MONTH @(month dt)) @(day dt)))
+  (defn yearday [dt] (+ (days-before-month @(year dt) @(month dt)) @(day dt)))
 
   (doc weekday-string "returns the name of the weekday of the `Datetime` `dt`.")
   (defn weekday-string [dt]
@@ -315,7 +314,7 @@ If `n` is negative, it will be subtracted instead.")
       (+ (* yy DAY)
          (+ (* (days-before-month y m) DAY)
             (+ (* (Int.dec d) DAY)
-               (+ (* hh HOUR) (+ (* mm MINUTE) (+ (Long.to-int delta) ss))))))))
+               (+ (* hh HOUR) (+ (* mm MINUTE) (- ss (Long.to-int delta)))))))))
 
   (doc to-unix-timestamp "returns the representation of the `Datetime` `dt` as
 a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
@@ -469,7 +468,8 @@ Example:
           \H
           (format "%02d" (Maybe.from @(hours dt) 0))
           \I
-          (format "%02d" (mod (Maybe.from @(hours dt) 0) 12))
+          (let [h (mod (Maybe.from @(hours dt) 0) 12)]
+            (format "%02d" (if (= h 0) 12 h)))
           \p
           (if (> (Maybe.from @(hours dt) 0) 11) @"PM" @"AM")
           \M
