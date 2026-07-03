@@ -493,9 +493,13 @@ Example:
           \j
           (format "%03d" (yearday dt))
           \U
-          (format "%02d" (/ (+ (- (yearday dt) (isoweekday dt)) 7) 7))
+          ; week of the year, Sunday as the first day; days before the first
+          ; Sunday are week 0. weekday is Monday-based, so shift to Sunday-based.
+          (format "%02d" (/ (+ (- (yearday dt) (mod (+ (weekday dt) 1) 7)) 6) 7))
           \W
-          (format "%02d" (/ (+ (- (yearday dt) (mod (isoweekday dt) 7)) 7) 7))
+          ; week of the year, Monday as the first day; days before the first
+          ; Monday are week 0. weekday is already Monday-based.
+          (format "%02d" (/ (+ (- (yearday dt) (weekday dt)) 6) 7))
           \c
           (strftime dt "%a %b %d %H:%M:%S %Y")
           \x

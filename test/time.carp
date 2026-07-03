@@ -455,6 +455,50 @@
                       (Maybe.Nothing))
       "%I")
     "strftime %I renders 23:00 as 11")
+  (assert-equal test
+    &@"061"
+    &(Datetime.strftime &(Datetime.date 2024 3 1) "%j")
+    "strftime %j is leap-aware after February")
+  (assert-equal test
+    &@"366"
+    &(Datetime.strftime &(Datetime.date 2024 12 31) "%j")
+    "strftime %j reaches 366 on the last day of a leap year")
+  (assert-equal test
+    &@"060"
+    &(Datetime.strftime &(Datetime.date 2023 3 1) "%j")
+    "strftime %j stays 60 for March 1 in a non-leap year")
+  (assert-equal test
+    &@"00"
+    &(Datetime.strftime &(Datetime.date 2024 1 1) "%U")
+    "strftime %U puts days before the first Sunday in week 0")
+  (assert-equal test
+    &@"01"
+    &(Datetime.strftime &(Datetime.date 2023 1 1) "%U")
+    "strftime %U starts week 1 on a January 1 that is a Sunday")
+  (assert-equal test
+    &@"08"
+    &(Datetime.strftime &(Datetime.date 2024 3 1) "%U")
+    "strftime %U is leap-aware after February")
+  (assert-equal test
+    &@"53"
+    &(Datetime.strftime &(Datetime.date 2023 12 31) "%U")
+    "strftime %U reaches week 53 on a year-ending Sunday")
+  (assert-equal test
+    &@"01"
+    &(Datetime.strftime &(Datetime.date 2024 1 1) "%W")
+    "strftime %W starts week 1 on a January 1 that is a Monday")
+  (assert-equal test
+    &@"00"
+    &(Datetime.strftime &(Datetime.date 2023 1 1) "%W")
+    "strftime %W puts a leading Sunday before the first Monday in week 0")
+  (assert-equal test
+    &@"09"
+    &(Datetime.strftime &(Datetime.date 2024 3 1) "%W")
+    "strftime %W is leap-aware after February")
+  (assert-equal test
+    &@"52"
+    &(Datetime.strftime &(Datetime.date 2023 12 31) "%W")
+    "strftime %W counts a year-ending Sunday in the preceding Monday week")
 
   (assert-true test
     (> &(Datetime.date 2024 3 16) &(Datetime.date 2024 3 15))
