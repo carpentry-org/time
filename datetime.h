@@ -13,3 +13,7 @@ struct tm* create_time() {
 Long* TM_tm_gmtoff(TM* t) {
   return (Long*)(&t->tm_gmtoff);
 }
+
+String* TM_tm_zone(TM* t) {
+  return (String*)(&t->tm_zone);
+}

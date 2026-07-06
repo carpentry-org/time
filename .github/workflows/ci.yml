@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -22,7 +22,11 @@ jobs:
       - name: Run tests
         run: |
           set -euo pipefail
-          carp -x test/time.carp
+          # Build with -Werror so platform const/type mismatches (e.g. glibc's
+          # const-qualified struct tm fields) fail CI instead of only warning.
+          printf '(add-cflag "-Werror")\n(load "test/time.carp")\n' > _ci_werror.carp
+          carp -x _ci_werror.carp
+          rm -f _ci_werror.carp
 
       - name: Install angler
         run: |

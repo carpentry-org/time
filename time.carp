@@ -34,10 +34,11 @@
    tm_year Int
    tm_wday Int
    tm_yday Int
-   tm_isdst Int
-   tm_zone String])
+   tm_isdst Int])
 
-(defmodule TM (register tm_gmtoff (Fn [&TM] &Long)))
+(defmodule TM
+  (register tm_gmtoff (Fn [&TM] &Long))
+  (register tm_zone (Fn [&TM] &String)))
 
 (doc Datetime "This module is primarily concerned with date and time. The
 `Datetime` type can be converted from and to various other types and formats,
