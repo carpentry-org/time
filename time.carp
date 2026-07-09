@@ -998,9 +998,9 @@ clamped to February 28.
             @(nanoseconds dt)
             @(tz dt)))))
 
-(deftype Timedelta [seconds- Int])
+(deftype Duration [seconds- Int])
 
-(doc Timedelta "this is a complementary module to be used with `Datetime` and
+(doc Duration "this is a complementary module to be used with `Datetime` and
 is concerned with adding and subtracting time values of the scale from seconds
 to weeks from `Datetime` values.
 
@@ -1011,11 +1011,11 @@ Example:
 (defn main []
   (println*
     &(Datetime.strftime
-      &(Timedelta.sub &(Datetime.now) &(Timedelta.days 2))
+      &(Duration.sub &(Datetime.now) &(Duration.days 2))
       \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
 ```
 ")
-(defmodule Timedelta
+(defmodule Duration
   (hidden seconds-)
   (private seconds-)
   (hidden set-seconds-)
@@ -1040,15 +1040,15 @@ Example:
   (doc weeks "creates a delta representing a number of weeks `n`.")
   (defn weeks [n] (days (* n 7)))
 
-  (doc add "adds a `Timedelta` `delta` to a `Datetime` `dt`.")
+  (doc add "adds a `Duration` `delta` to a `Datetime` `dt`.")
   (defn add [dt delta] (Datetime.add-seconds dt @(seconds- delta)))
 
-  (doc sub "subtracts a `Timedelta` `delta` from a `Datetime` `dt`.")
+  (doc sub "subtracts a `Duration` `delta` from a `Datetime` `dt`.")
   (defn sub [dt delta] (Datetime.add-seconds dt (neg @(seconds- delta))))
 
   (doc between
     "returns the signed difference between the `Datetime`s `a` and `b`
-as a `Timedelta`.
+as a `Duration`.
 
 The result is positive when `a` is later than `b`, and negative when `a` is
 earlier, mirroring `Datetime.diff`.")
@@ -1089,15 +1089,15 @@ delta `d`, truncating any remaining seconds toward zero.")
 
   (doc = "checks whether the deltas `a` and `b` represent the same duration.")
   (defn = [a b] (Int.= @(seconds- a) @(seconds- b)))
-  (implements = Timedelta.=)
+  (implements = Duration.=)
 
   (doc < "checks whether the delta `a` is shorter than the delta `b`.")
   (defn < [a b] (Int.< @(seconds- a) @(seconds- b)))
-  (implements < Timedelta.<)
+  (implements < Duration.<)
 
   (doc > "checks whether the delta `a` is longer than the delta `b`.")
   (defn > [a b] (Int.> @(seconds- a) @(seconds- b)))
-  (implements > Timedelta.>)
+  (implements > Duration.>)
 
   (doc zero? "checks whether the delta `d` represents no elapsed time.")
   (defn zero? [d] (Int.= @(seconds- d) 0))
@@ -1129,4 +1129,4 @@ and the zero delta renders as `0s`.")
           (when (> secs 0) (Array.push-back! &parts (fmt "%ds" secs)))
           (String.concat
             &[(if (Int.< total 0) @"-" @"") (String.join " " &parts)])))))
-  (implements str Timedelta.str))
+  (implements str Duration.str))

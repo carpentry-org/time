@@ -6,7 +6,7 @@
 (Project.config "docs-url" "https://github.com/carpentry-org/time")
 (Project.config "docs-styling" "style.css")
 (Project.config "docs-prelude" "This library exports three datatypes:
-[`Datetime`](./Datetime.html), [`Timedelta`](./Timedelta.html), and
+[`Datetime`](./Datetime.html), [`Duration`](./Duration.html), and
 [`Timezone`](./Timezone.html).
 
 `Datetime` is meant to be a low friction datatype; this means that it should
@@ -14,7 +14,7 @@ be relatively easy to create, modify, and convert to other types! It can be
 formatted with `strftime` and parsed with `strptime`, both mirroring the C
 formatting API.
 
-`Timedelta` is used to add and subtract anything on the scale of seconds to
+`Duration` is used to add and subtract anything on the scale of seconds to
 weeks from those times.
 
 `Timezone` represents a timezone with a name, UTC offset, and DST flag.
@@ -26,7 +26,7 @@ weeks from those times.
 (defn main []
   (println*
     &(Datetime.strftime
-      &(Timedelta.sub &(Datetime.now) &(Timedelta.days 2))
+      &(Duration.sub &(Datetime.now) &(Duration.days 2))
       \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
 ```
 
@@ -40,5 +40,5 @@ weeks from those times.
     (Result.Error e) (println* &e)))
 ```")
 
-(save-docs Timezone Datetime Timedelta)
+(save-docs Timezone Datetime Duration)
 (quit)
