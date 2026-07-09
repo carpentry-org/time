@@ -14,8 +14,10 @@ This library exports two important datatypes, `Datetime` and `Timedelta`.
 `Datetime` is meant to be a low friction datatype; this means that it should
 be relatively easy to create, modify, and convert to other types!
 
-`Timedelta` is used to add and subtract anything on the scale of  seconds to
-weeks from those times.
+`Timedelta` represents a duration on the scale of seconds to weeks. You can add
+or subtract one from a `Datetime`, measure the span between two `Datetime`s,
+combine and scale deltas, compare them, and render them in a human-readable
+form.
 
 ### Formatting
 
@@ -78,6 +80,26 @@ mirroring [the C formatting API](http://www.cplusplus.com/reference/ctime/strfti
 When parsing with `strptime`, specifiers `%a`, `%A`, `%w`, `%j`, `%U`, and
 `%W` are consumed from the input but discarded, since they represent derived
 values that are fully determined by the date.
+
+### Durations
+
+A `Timedelta` is a duration you can build from seconds up to weeks, shift a
+`Datetime` by, or compute from the span between two `Datetime`s:
+
+```clojure
+(defn main []
+  (let-do [span (Timedelta.between
+                  &(Datetime.date 2024 3 15)
+                  &(Datetime.date 2024 3 10))]
+    (println* &(Timedelta.str &span))                       ; => 5d
+    (println* &(Timedelta.str &(Timedelta.scale &span 2))))) ; => 10d
+```
+
+Deltas can be combined (`plus`, `minus`, `negate`, `scale`/`mul`), compared
+(`=`, `<`, `>`), and inspected (`zero?`, `pos?`, `neg?`). The total-unit
+accessors `to-seconds`, `to-minutes`, `to-hours`, and `to-days` return whole
+units, truncated toward zero. `str` renders a delta like `1d 2h 3m 4s`, omitting
+zero components and prefixing negatives with `-`.
 
 ## Testing
 

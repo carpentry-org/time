@@ -998,4 +998,179 @@
                       (Maybe.Nothing)
                       (Maybe.Nothing))
       1)
-    "add-years: preserves time components"))
+    "add-years: preserves time components")
+
+  (assert-equal test
+    &(Timedelta.days 2)
+    &(Timedelta.between &(Datetime.date 2024 1 3) &(Datetime.date 2024 1 1))
+    "between: positive whole-day difference")
+  (assert-equal test
+    &(Timedelta.days -2)
+    &(Timedelta.between &(Datetime.date 2024 1 1) &(Datetime.date 2024 1 3))
+    "between: negative difference")
+  (assert-true test
+    (Timedelta.zero?
+      &(Timedelta.between &(Datetime.date 2024 1 1) &(Datetime.date 2024 1 1)))
+    "between: identical datetimes is zero")
+  (assert-equal test
+    &(Timedelta.seconds 3661)
+    &(Timedelta.between
+      &(Datetime.init 2024
+                      1
+                      1
+                      (Maybe.Just 1)
+                      (Maybe.Just 1)
+                      (Maybe.Just 1)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing))
+      &(Datetime.init 2024
+                      1
+                      1
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "between: sub-day difference in seconds")
+
+  (assert-equal test
+    3600
+    (Timedelta.to-seconds &(Timedelta.hours 1))
+    "to-seconds: exact")
+  (assert-equal test
+    1
+    (Timedelta.to-minutes &(Timedelta.seconds 90))
+    "to-minutes: truncates positive remainder")
+  (assert-equal test
+    0
+    (Timedelta.to-minutes &(Timedelta.seconds 59))
+    "to-minutes: below one minute is zero")
+  (assert-equal test
+    -1
+    (Timedelta.to-minutes &(Timedelta.seconds -90))
+    "to-minutes: truncates toward zero for negatives")
+  (assert-equal test
+    1
+    (Timedelta.to-hours &(Timedelta.minutes 90))
+    "to-hours: truncates remainder")
+  (assert-equal test
+    1
+    (Timedelta.to-days &(Timedelta.hours 25))
+    "to-days: truncates remainder")
+  (assert-equal test
+    7
+    (Timedelta.to-days &(Timedelta.weeks 1))
+    "to-days: one week is seven days")
+
+  (assert-equal test
+    &(Timedelta.seconds 90)
+    &(Timedelta.plus &(Timedelta.minutes 1) &(Timedelta.seconds 30))
+    "plus: sums two deltas")
+  (assert-equal test
+    &(Timedelta.seconds 30)
+    &(Timedelta.minus &(Timedelta.minutes 1) &(Timedelta.seconds 30))
+    "minus: difference of two deltas")
+  (assert-equal test
+    &(Timedelta.seconds -30)
+    &(Timedelta.minus &(Timedelta.seconds 30) &(Timedelta.minutes 1))
+    "minus: can go negative")
+  (assert-equal test
+    &(Timedelta.seconds -60)
+    &(Timedelta.negate &(Timedelta.minutes 1))
+    "negate: flips a positive delta")
+  (assert-equal test
+    &(Timedelta.minutes 1)
+    &(Timedelta.negate &(Timedelta.seconds -60))
+    "negate: flips a negative delta")
+  (assert-equal test
+    &(Timedelta.minutes 3)
+    &(Timedelta.scale &(Timedelta.minutes 1) 3)
+    "scale: multiplies by a factor")
+  (assert-equal test
+    &(Timedelta.seconds 0)
+    &(Timedelta.scale &(Timedelta.minutes 1) 0)
+    "scale: by zero yields the zero delta")
+  (assert-equal test
+    &(Timedelta.minutes 3)
+    &(Timedelta.mul &(Timedelta.minutes 1) 3)
+    "mul: aliases scale")
+
+  (assert-true test
+    (Timedelta.= &(Timedelta.minutes 1) &(Timedelta.seconds 60))
+    "=: equal durations from different units")
+  (assert-false test
+    (Timedelta.= &(Timedelta.minutes 1) &(Timedelta.seconds 61))
+    "=: unequal durations")
+  (assert-true test
+    (Timedelta.< &(Timedelta.seconds 30) &(Timedelta.minutes 1))
+    "<: shorter is less")
+  (assert-false test
+    (Timedelta.< &(Timedelta.minutes 1) &(Timedelta.seconds 30))
+    "<: longer is not less")
+  (assert-true test
+    (Timedelta.> &(Timedelta.minutes 1) &(Timedelta.seconds 30))
+    ">: longer is greater")
+  (assert-false test
+    (Timedelta.> &(Timedelta.seconds 30) &(Timedelta.minutes 1))
+    ">: shorter is not greater")
+  (assert-true test
+    (Timedelta.zero? &(Timedelta.seconds 0))
+    "zero?: the zero delta")
+  (assert-false test
+    (Timedelta.zero? &(Timedelta.seconds 1))
+    "zero?: a non-zero delta")
+  (assert-true test
+    (Timedelta.pos? &(Timedelta.seconds 1))
+    "pos?: positive delta")
+  (assert-false test
+    (Timedelta.pos? &(Timedelta.seconds -1))
+    "pos?: negative delta is not positive")
+  (assert-false test
+    (Timedelta.pos? &(Timedelta.seconds 0))
+    "pos?: zero is not positive")
+  (assert-true test
+    (Timedelta.neg? &(Timedelta.seconds -1))
+    "neg?: negative delta")
+  (assert-false test
+    (Timedelta.neg? &(Timedelta.seconds 1))
+    "neg?: positive delta is not negative")
+  (assert-false test
+    (Timedelta.neg? &(Timedelta.seconds 0))
+    "neg?: zero is not negative")
+
+  (assert-equal test
+    &@"0s"
+    &(Timedelta.str &(Timedelta.seconds 0))
+    "str: zero delta")
+  (assert-equal test
+    &@"4s"
+    &(Timedelta.str &(Timedelta.seconds 4))
+    "str: single second")
+  (assert-equal test
+    &@"3m"
+    &(Timedelta.str &(Timedelta.minutes 3))
+    "str: single minute")
+  (assert-equal test
+    &@"2h"
+    &(Timedelta.str &(Timedelta.hours 2))
+    "str: single hour")
+  (assert-equal test
+    &@"1d"
+    &(Timedelta.str &(Timedelta.days 1))
+    "str: single day")
+  (assert-equal test
+    &@"1d 2h 3m 4s"
+    &(Timedelta.str &(Timedelta.seconds 93784))
+    "str: multi-unit")
+  (assert-equal test
+    &@"1h 5s"
+    &(Timedelta.str &(Timedelta.seconds 3605))
+    "str: omits zero components")
+  (assert-equal test
+    &@"-30s"
+    &(Timedelta.str &(Timedelta.seconds -30))
+    "str: negative single unit")
+  (assert-equal test
+    &@"-1d 2h 3m 4s"
+    &(Timedelta.str &(Timedelta.seconds -93784))
+    "str: negative multi-unit"))
