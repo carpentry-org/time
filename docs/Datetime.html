@@ -28,8 +28,8 @@
                             </a>
                         </li>
                         <li>
-                            <a href="Timedelta.html">
-                                Timedelta
+                            <a href="Duration.html">
+                                Duration
                             </a>
                         </li>
                     </ul>
@@ -45,13 +45,13 @@
 formatted using <code>strftime</code>, and parsed using <code>strptime</code>. Both mimic
 <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
 <p>Formatting example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.1&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.4.0&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
 </code></pre>
 <p>Parsing example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.3.1&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.4.0&quot;)
 
 (defn main []
   (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
@@ -392,6 +392,30 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     </span>
                     <p class="doc">
                         <p>creates a <code>Datetime</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#isocalendar">
+                        <h3 id="isocalendar">
+                            isocalendar
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a)] (Array Int))
+                    </p>
+                    <pre class="args">
+                        (isocalendar dt)
+                    </pre>
+                    <p class="doc">
+                        <p>returns the ISO 8601 week date of the <code>Datetime</code> <code>dt</code> as a
+three-element array <code>[iso-year iso-week iso-weekday]</code>. <code>iso-week</code> runs from <code>1</code> to
+<code>53</code> and <code>iso-weekday</code> from <code>1</code> (Monday) to <code>7</code> (Sunday). The ISO year can differ
+from the calendar year near a year boundary: <code>2023-01-01</code> is week <code>52</code> of <code>2022</code>,
+and <code>2024-12-30</code> is week <code>01</code> of <code>2025</code>.</p>
 
                     </p>
                 </div>
@@ -1045,11 +1069,21 @@ returning a <code>(Result Datetime String)</code>.</p>
 <li><code>%A</code> — full weekday (parsed and discarded)</li>
 <li><code>%w</code> — weekday number (parsed and discarded)</li>
 <li><code>%j</code> — day of year (parsed and discarded)</li>
-<li><code>%U</code>, <code>%W</code> — week number (parsed and discarded)</li>
+<li><code>%U</code>, <code>%W</code>, <code>%V</code> — week number (parsed and discarded)</li>
+<li><code>%G</code> — ISO week-based year (parsed and discarded)</li>
+<li><code>%u</code> — ISO weekday, 1–7 (parsed and discarded)</li>
 <li><code>%c</code> — locale datetime (expands to <code>%a %b %d %H:%M:%S %Y</code>)</li>
 <li><code>%x</code> — ISO date (expands to <code>%Y-%m-%d</code>)</li>
 <li><code>%X</code> — ISO time (expands to <code>%H:%M:%S</code>)</li>
+<li><code>%F</code> — ISO date (expands to <code>%Y-%m-%d</code>)</li>
+<li><code>%T</code> — 24-hour time (expands to <code>%H:%M:%S</code>)</li>
+<li><code>%R</code> — 24-hour time without seconds (expands to <code>%H:%M</code>)</li>
+<li><code>%D</code> — US-style date (expands to <code>%m/%d/%y</code>)</li>
+<li><code>%r</code> — 12-hour clock time (expands to <code>%I:%M:%S %p</code>)</li>
+<li><code>%h</code> — abbreviated month name (alias of <code>%b</code>)</li>
 </ul>
+<p>Reconstructing a date from the ISO week fields (<code>%G</code>/<code>%V</code>/<code>%u</code>) is not supported;
+they are consumed but do not set the date.</p>
 <p>Example:</p>
 <pre><code>(Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
 </code></pre>
