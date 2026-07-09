@@ -241,8 +241,32 @@ in the range of `1` to `365` or `366`, depending on whether it’s a leap year."
   (hidden mod-)
   (defn mod- [a n] (- a (* n (div- a n))))
 
-  (hidden div-)
-  (defn div- [a n] (to-int (floor (/ (Double.from-int a) (Double.from-int n)))))
+  (private iso-week1-monday)
+  (hidden iso-week1-monday)
+  ; the Gregorian ordinal of the Monday starting ISO week 1 of year `y` (the week
+  ; holding that year's first Thursday). firstwd is 0=Mon..6=Sun, matching weekday.
+  (defn iso-week1-monday [y]
+    (let [jan1 (ymd2ord y 1 1)
+          firstwd (mod (+ jan1 6) 7)]
+      (if (> firstwd 3) (- (+ jan1 7) firstwd) (- jan1 firstwd))))
+
+  (doc isocalendar "returns the ISO 8601 week date of the `Datetime` `dt` as a
+three-element array `[iso-year iso-week iso-weekday]`. `iso-week` runs from `1` to
+`53` and `iso-weekday` from `1` (Monday) to `7` (Sunday). The ISO year can differ
+from the calendar year near a year boundary: `2023-01-01` is week `52` of `2022`,
+and `2024-12-30` is week `01` of `2025`.")
+  (defn isocalendar [dt]
+    (let-do [ord (to-ordinal dt)
+             y @(year dt)
+             week (div- (- ord (iso-week1-monday y)) 7)]
+      (if (< week 0)
+        (do
+          (set! y (Int.dec y))
+          (set! week (div- (- ord (iso-week1-monday y)) 7)))
+        (when-do (and (> week 51) (>= ord (iso-week1-monday (Int.inc y))))
+          (set! y (Int.inc y))
+          (set! week 0)))
+      [y (Int.inc week) (isoweekday dt)]))
 
   (doc add-seconds "adds a number of seconds `n` to a `Datetime`.
 
@@ -507,6 +531,24 @@ Example:
           (isoformat dt)
           \X
           (isotime dt)
+          \u
+          (str (isoweekday dt))
+          \V
+          (let [ic (isocalendar dt)] (format "%02d" @(Array.unsafe-nth &ic 1)))
+          \G
+          (let [ic (isocalendar dt)] (format "%04d" @(Array.unsafe-nth &ic 0)))
+          \F
+          (strftime dt "%Y-%m-%d")
+          \T
+          (strftime dt "%H:%M:%S")
+          \R
+          (strftime dt "%H:%M")
+          \D
+          (strftime dt "%m/%d/%y")
+          \r
+          (strftime dt "%I:%M:%S %p")
+          \h
+          (month-short-string dt)
           (str c)))
 
   (doc format "The interface implementation of `format` for `Datetime` values.
@@ -586,6 +628,30 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
                     (do
                       (set! result (String.concat &[result @"%H:%M:%S"]))
                       (set! i (+ i 2)))
+                    \F
+                    (do
+                      (set! result (String.concat &[result @"%Y-%m-%d"]))
+                      (set! i (+ i 2)))
+                    \T
+                    (do
+                      (set! result (String.concat &[result @"%H:%M:%S"]))
+                      (set! i (+ i 2)))
+                    \R
+                    (do
+                      (set! result (String.concat &[result @"%H:%M"]))
+                      (set! i (+ i 2)))
+                    \D
+                    (do
+                      (set! result (String.concat &[result @"%m/%d/%y"]))
+                      (set! i (+ i 2)))
+                    \r
+                    (do
+                      (set! result (String.concat &[result @"%I:%M:%S %p"]))
+                      (set! i (+ i 2)))
+                    \h
+                    (do
+                      (set! result (String.concat &[result @"%b"]))
+                      (set! i (+ i 2)))
                     (do
                       (set! result (String.concat &[result (str c) (str spec)]))
                       (set! i (+ i 2)))))
@@ -615,10 +681,21 @@ The format specifiers mirror those of `strftime`:
 - `%A` — full weekday (parsed and discarded)
 - `%w` — weekday number (parsed and discarded)
 - `%j` — day of year (parsed and discarded)
-- `%U`, `%W` — week number (parsed and discarded)
+- `%U`, `%W`, `%V` — week number (parsed and discarded)
+- `%G` — ISO week-based year (parsed and discarded)
+- `%u` — ISO weekday, 1–7 (parsed and discarded)
 - `%c` — locale datetime (expands to `%a %b %d %H:%M:%S %Y`)
 - `%x` — ISO date (expands to `%Y-%m-%d`)
 - `%X` — ISO time (expands to `%H:%M:%S`)
+- `%F` — ISO date (expands to `%Y-%m-%d`)
+- `%T` — 24-hour time (expands to `%H:%M:%S`)
+- `%R` — 24-hour time without seconds (expands to `%H:%M`)
+- `%D` — US-style date (expands to `%m/%d/%y`)
+- `%r` — 12-hour clock time (expands to `%I:%M:%S %p`)
+- `%h` — abbreviated month name (alias of `%b`)
+
+Reconstructing a date from the ISO week fields (`%G`/`%V`/`%u`) is not supported;
+they are consumed but do not set the date.
 
 Example:
 ```
@@ -809,6 +886,24 @@ Example:
                           (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
                           (do (set! err @"failed to parse %W") (set! ok false)))
+                      \V
+                      (match (parse-digits input ipos 2)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %V") (set! ok false)))
+                      \G
+                      (match (parse-digits input ipos 4)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 4)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %G") (set! ok false)))
+                      \u
+                      (match (parse-digits input ipos 1)
+                        (Maybe.Just v)
+                          (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 2)))
+                        (Maybe.Nothing)
+                          (do (set! err @"failed to parse %u") (set! ok false)))
                       \z
                       (if (> (+ ipos 5) ilen)
                         (do (set! err @"failed to parse %z") (set! ok false))
