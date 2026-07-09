@@ -500,6 +500,99 @@
     &(Datetime.strftime &(Datetime.date 2023 12 31) "%W")
     "strftime %W counts a year-ending Sunday in the preceding Monday week")
 
+  (assert-equal test
+    &[2024 11 5]
+    &(Datetime.isocalendar &(Datetime.date 2024 3 15))
+    "isocalendar returns [iso-year iso-week iso-weekday] for a mid-year date")
+  (assert-equal test
+    &[2022 52 7]
+    &(Datetime.isocalendar &(Datetime.date 2023 1 1))
+    "isocalendar rolls a leading Sunday back into the previous ISO year")
+  (assert-equal test
+    &[2025 1 1]
+    &(Datetime.isocalendar &(Datetime.date 2024 12 30))
+    "isocalendar rolls a trailing Monday forward into the next ISO year")
+  (assert-equal test
+    &[2020 53 5]
+    &(Datetime.isocalendar &(Datetime.date 2021 1 1))
+    "isocalendar reports week 53 for a 53-week year")
+  (assert-equal test
+    &@"2024"
+    &(Datetime.strftime &(Datetime.date 2024 1 1) "%G")
+    "strftime %G matches the calendar year mid-week")
+  (assert-equal test
+    &@"01"
+    &(Datetime.strftime &(Datetime.date 2024 1 1) "%V")
+    "strftime %V zero-pads an early week")
+  (assert-equal test
+    &@"1"
+    &(Datetime.strftime &(Datetime.date 2024 1 1) "%u")
+    "strftime %u renders Monday as 1")
+  (assert-equal test
+    &@"7"
+    &(Datetime.strftime &(Datetime.date 2023 1 1) "%u")
+    "strftime %u renders Sunday as 7")
+  (assert-equal test
+    &@"2022"
+    &(Datetime.strftime &(Datetime.date 2023 1 1) "%G")
+    "strftime %G rolls back to the previous ISO year on a leading Sunday")
+  (assert-equal test
+    &@"52"
+    &(Datetime.strftime &(Datetime.date 2023 1 1) "%V")
+    "strftime %V is week 52 of 2022 for 2023-01-01")
+  (assert-equal test
+    &@"2025"
+    &(Datetime.strftime &(Datetime.date 2024 12 30) "%G")
+    "strftime %G rolls forward to the next ISO year on a trailing Monday")
+  (assert-equal test
+    &@"01"
+    &(Datetime.strftime &(Datetime.date 2024 12 30) "%V")
+    "strftime %V is week 01 of 2025 for 2024-12-30")
+  (assert-equal test
+    &@"53"
+    &(Datetime.strftime &(Datetime.date 2021 1 1) "%V")
+    "strftime %V reaches week 53 in a 53-week year")
+  (assert-equal test
+    &@"2024-03-15"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%F")
+    "strftime %F expands to an ISO date")
+  (assert-equal test
+    &@"00:00:00"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%T")
+    "strftime %T expands to 24-hour time")
+  (assert-equal test
+    &@"00:00"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%R")
+    "strftime %R is 24-hour time without seconds")
+  (assert-equal test
+    &@"03/15/24"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%D")
+    "strftime %D is a US-style date")
+  (assert-equal test
+    &@"12:00:00 AM"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%r")
+    "strftime %r is 12-hour time with AM/PM")
+  (assert-equal test
+    &@"Mar"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%h")
+    "strftime %h aliases the abbreviated month name")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024-03-15 11" "%Y-%m-%d %V")
+    "strptime consumes %V without disturbing the parsed date")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024 2024-03-15 5" "%G %Y-%m-%d %u")
+    "strptime consumes %G and %u without disturbing the parsed date")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024-03-15" "%F")
+    "strptime parses %F, which expands to %Y-%m-%d")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "03/15/24" "%D")
+    "strptime parses %D, which expands to %m/%d/%y")
+
   (assert-true test
     (> &(Datetime.date 2024 3 16) &(Datetime.date 2024 3 15))
     "later date is greater")

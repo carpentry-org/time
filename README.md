@@ -68,16 +68,25 @@ mirroring [the C formatting API](http://www.cplusplus.com/reference/ctime/strfti
 | `%j`      | Day of year (3 digits)         | `075`            |
 | `%U`      | Week number (Sunday start)     | `11`             |
 | `%W`      | Week number (Monday start)     | `11`             |
+| `%V`      | ISO 8601 week number           | `11`             |
+| `%G`      | ISO 8601 week-based year       | `2024`           |
+| `%u`      | ISO weekday (1=Mon, 7=Sun)     | `5`              |
 | `%z`      | UTC offset                     | `+0530`          |
 | `%Z`      | Timezone name                  | `UTC`            |
 | `%c`      | Locale datetime                | `Fri Mar 15 14:30:45 2024` |
 | `%x`      | ISO date                       | `2024-03-15`     |
 | `%X`      | ISO time                       | `14:30:45`       |
+| `%F`      | ISO date (`%Y-%m-%d`)          | `2024-03-15`     |
+| `%T`      | 24-hour time (`%H:%M:%S`)      | `14:30:45`       |
+| `%R`      | 24-hour time (`%H:%M`)         | `14:30`          |
+| `%D`      | US date (`%m/%d/%y`)           | `03/15/24`       |
+| `%r`      | 12-hour time (`%I:%M:%S %p`)   | `02:30:45 PM`    |
+| `%h`      | Abbreviated month (alias `%b`) | `Mar`            |
 | `%%`      | Literal `%`                    | `%`              |
 
-When parsing with `strptime`, specifiers `%a`, `%A`, `%w`, `%j`, `%U`, and
-`%W` are consumed from the input but discarded, since they represent derived
-values that are fully determined by the date.
+When parsing with `strptime`, specifiers `%a`, `%A`, `%w`, `%j`, `%U`, `%W`,
+`%V`, `%G`, and `%u` are consumed from the input but discarded, since they
+represent derived values that are fully determined by the date.
 
 ## Testing
 
