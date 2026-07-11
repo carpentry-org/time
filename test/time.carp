@@ -2,6 +2,21 @@
 (load "../time.carp")
 (use Test)
 
+; a Datetime with a time-of-day and a timezone, no nanoseconds — keeps the
+; timezone-conversion assertions below readable.
+(defn at-tz [y mo d h mi s tz]
+  (Datetime.init y
+                 mo
+                 d
+                 (Maybe.Just h)
+                 (Maybe.Just mi)
+                 (Maybe.Just s)
+                 (Maybe.Nothing)
+                 (Maybe.Just tz)))
+
+; render a Datetime as "YYYY-MM-DD HH:MM:SS" for whole-instant comparisons.
+(defn stamp [dt] (fmt "%s %s" &(Datetime.isoformat dt) &(Datetime.isotime dt)))
+
 (deftest test
   (assert-equal test
     2024
@@ -492,6 +507,110 @@
                       (Maybe.Nothing)
                       (Maybe.Nothing)))
     "to-unix-timestamp of the day after the leap day 1972-03-01")
+
+  ; --- timezone conversion: to-utc ---
+  ; 22:00 EST (UTC-5) is 03:00 UTC the next day
+  (assert-equal test
+    &@"2024-01-02 03:00:00"
+    &(stamp
+      &(Datetime.to-utc
+        &(at-tz 2024 1 1 22 0 0 (Timezone.init @"EST" -18000l false))))
+    "to-utc shifts a west-of-UTC wall-clock forward, across midnight")
+  ; 00:30 CET (UTC+1) is 23:30 UTC the previous day (and previous year)
+  (assert-equal test
+    &@"2023-12-31 23:30:00"
+    &(stamp
+      &(Datetime.to-utc
+        &(at-tz 2024 1 1 0 30 0 (Timezone.init @"CET" 3600l false))))
+    "to-utc shifts an east-of-UTC wall-clock back, across a year boundary")
+  ; an already-UTC Datetime is unchanged
+  (assert-equal test
+    &@"2024-06-01 12:00:00"
+    &(stamp &(Datetime.to-utc &(at-tz 2024 6 1 12 0 0 @&Timezone.utc)))
+    "to-utc leaves an already-UTC Datetime unshifted")
+  ; a naive (timezone-less) Datetime is treated as UTC and only labelled
+  (assert-true test
+    (Datetime.utc?
+      &(Datetime.to-utc
+        &(Datetime.init 2024
+                        6
+                        1
+                        (Maybe.Just 12)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))))
+    "to-utc labels a naive Datetime as UTC")
+
+  ; --- timezone conversion: in-timezone ---
+  ; 22:00 EST -> 12:00 JST the next day (EST+5h=UTC, UTC+9h=JST)
+  (assert-equal test
+    &@"2024-01-02 12:00:00"
+    &(stamp
+      &(Datetime.in-timezone
+        &(at-tz 2024 1 1 22 0 0 (Timezone.init @"EST" -18000l false))
+        &(Timezone.init @"JST" 32400l false)))
+    "in-timezone converts EST to JST preserving the instant")
+  ; 03:00 UTC -> 22:00 EST the previous day
+  (assert-equal test
+    &@"2024-01-01 22:00:00"
+    &(stamp
+      &(Datetime.in-timezone &(at-tz 2024 1 2 3 0 0 @&Timezone.utc)
+                             &(Timezone.init @"EST" -18000l false)))
+    "in-timezone converts UTC back to EST across midnight")
+  ; converting out and back preserves the original wall-clock
+  (assert-equal test
+    &@"2024-03-10 08:15:30"
+    &(stamp
+      &(Datetime.in-timezone
+        &(Datetime.in-timezone
+          &(at-tz 2024 3 10 8 15 30 (Timezone.init @"CET" 3600l false))
+          &(Timezone.init @"JST" 32400l false))
+        &(Timezone.init @"CET" 3600l false)))
+    "in-timezone round-trips CET -> JST -> CET")
+
+  ; --- instant-aware comparison ---
+  ; 14:00 EST and 19:00 UTC are the same instant
+  (assert-true test
+    (Datetime.equal-instant?
+      &(at-tz 2024 1 1 14 0 0 (Timezone.init @"EST" -18000l false))
+      &(at-tz 2024 1 1 19 0 0 @&Timezone.utc))
+    "equal-instant? sees 14:00 EST and 19:00 UTC as equal")
+  (assert-false test
+    (Datetime.equal-instant?
+      &(at-tz 2024 1 1 14 0 0 (Timezone.init @"EST" -18000l false))
+      &(at-tz 2024 1 1 20 0 0 @&Timezone.utc))
+    "equal-instant? separates 14:00 EST from 20:00 UTC")
+  (assert-true test
+    (Datetime.before-instant?
+      &(at-tz 2024 1 1 13 59 0 (Timezone.init @"EST" -18000l false))
+      &(at-tz 2024 1 1 19 0 0 @&Timezone.utc))
+    "before-instant? orders 13:59 EST before 19:00 UTC")
+  (assert-true test
+    (Datetime.after-instant?
+      &(at-tz 2024 1 1 14 1 0 (Timezone.init @"EST" -18000l false))
+      &(at-tz 2024 1 1 19 0 0 @&Timezone.utc))
+    "after-instant? orders 14:01 EST after 19:00 UTC")
+  ; within the same second, nanoseconds break the tie
+  (assert-true test
+    (Datetime.before-instant?
+      &(Datetime.init 2024
+                      1
+                      1
+                      (Maybe.Just 19)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 100)
+                      (Maybe.Just @&Timezone.utc))
+      &(Datetime.init 2024
+                      1
+                      1
+                      (Maybe.Just 19)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 200)
+                      (Maybe.Just @&Timezone.utc)))
+    "before-instant? uses nanoseconds as a tiebreaker within a second")
 
   (assert-equal test
     &@"00:00:30"
