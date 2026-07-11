@@ -300,6 +300,199 @@
                         (Maybe.Nothing))))
     "from-unix-timestamp round-trips March 1 in leap year")
 
+  ; known UTC values, cross-checked against the standard Unix epoch. 1971-01-01
+  ; is one non-leap year (365 days) past the epoch; this input previously
+  ; SIGABRTed in both directions.
+  (assert-equal test
+    31536000
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 1971
+                      1
+                      1
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp of 1971-01-01")
+  (assert-equal test
+    &(Datetime.init 1971
+                    1
+                    1
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 31536000)
+    "from-unix-timestamp of 1971-01-01")
+  ; 2023-12-31 23:59:59 (one second before 2024) previously produced a day-ZERO
+  ; date of 2024-1-0
+  (assert-equal test
+    1704067199
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 2023
+                      12
+                      31
+                      (Maybe.Just 23)
+                      (Maybe.Just 59)
+                      (Maybe.Just 59)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp of 2023-12-31 23:59:59")
+  (assert-equal test
+    &(Datetime.init 2023
+                    12
+                    31
+                    (Maybe.Just 23)
+                    (Maybe.Just 59)
+                    (Maybe.Just 59)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 1704067199)
+    "from-unix-timestamp of 2023-12-31 23:59:59")
+  ; 1000000000 is 2001-09-09 01:46:40 UTC
+  (assert-equal test
+    1000000000
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 2001
+                      9
+                      9
+                      (Maybe.Just 1)
+                      (Maybe.Just 46)
+                      (Maybe.Just 40)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp of 2001-09-09 01:46:40")
+  (assert-equal test
+    &(Datetime.init 2001
+                    9
+                    9
+                    (Maybe.Just 1)
+                    (Maybe.Just 46)
+                    (Maybe.Just 40)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 1000000000)
+    "from-unix-timestamp of 2001-09-09 01:46:40")
+  ; the 32-bit time_t maximum: 2038-01-19 03:14:07 UTC = 2147483647
+  (assert-equal test
+    2147483647
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 2038
+                      1
+                      19
+                      (Maybe.Just 3)
+                      (Maybe.Just 14)
+                      (Maybe.Just 7)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp at the 32-bit boundary")
+  (assert-equal test
+    &(Datetime.init 2038
+                    1
+                    19
+                    (Maybe.Just 3)
+                    (Maybe.Just 14)
+                    (Maybe.Just 7)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 2147483647)
+    "from-unix-timestamp at the 32-bit boundary")
+  ; negative timestamps (pre-1970). / and mod truncate toward zero in Carp, so
+  ; the time-of-day must be floored to stay in 0..86399.
+  (assert-equal test
+    -1
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 1969
+                      12
+                      31
+                      (Maybe.Just 23)
+                      (Maybe.Just 59)
+                      (Maybe.Just 59)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp one second before the epoch is -1")
+  (assert-equal test
+    &(Datetime.init 1969
+                    12
+                    31
+                    (Maybe.Just 23)
+                    (Maybe.Just 59)
+                    (Maybe.Just 59)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp -1)
+    "from-unix-timestamp of -1 is one second before the epoch")
+  (assert-equal test
+    &(Datetime.init 1969
+                    12
+                    31
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp -86400)
+    "from-unix-timestamp of -86400 is exactly one day before the epoch")
+  (assert-equal test
+    &(Datetime.init 1969
+                    6
+                    15
+                    (Maybe.Just 12)
+                    (Maybe.Just 30)
+                    (Maybe.Just 45)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp
+      (Datetime.to-unix-timestamp
+        &(Datetime.init 1969
+                        6
+                        15
+                        (Maybe.Just 12)
+                        (Maybe.Just 30)
+                        (Maybe.Just 45)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))))
+    "from-unix-timestamp round-trips a pre-1970 date with a time-of-day")
+  ; leap-day boundary, cross-checked against known UTC values: 1972-02-29 is
+  ; 68169600 and the following day 1972-03-01 is exactly 86400 seconds later
+  (assert-equal test
+    68169600
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 1972
+                      2
+                      29
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp of the leap day 1972-02-29")
+  (assert-equal test
+    &(Datetime.init 1972
+                    2
+                    29
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Just 0)
+                    (Maybe.Nothing)
+                    (Maybe.Nothing))
+    &(Datetime.from-unix-timestamp 68169600)
+    "from-unix-timestamp of the leap day 1972-02-29")
+  (assert-equal test
+    68256000
+    (Datetime.to-unix-timestamp
+      &(Datetime.init 1972
+                      3
+                      1
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Just 0)
+                      (Maybe.Nothing)
+                      (Maybe.Nothing)))
+    "to-unix-timestamp of the day after the leap day 1972-03-01")
+
   (assert-equal test
     &@"00:00:30"
     &(Datetime.isotime
