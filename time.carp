@@ -366,6 +366,63 @@ timezone is not set.")
             (= &(String.ascii-to-lower (Timezone.name &t)) "utc")
             (and (= @(Timezone.delta &t) 0l) (not @(Timezone.dst? &t)))))))
 
+  (doc to-utc "returns the `Datetime` `dt` expressed in UTC.
+
+The wall-clock fields are shifted by the timezone offset (`delta`) so they name
+the same instant in UTC, and the timezone is set to `Timezone.utc`. A `Datetime`
+that is already UTC — or that has no timezone, which the library treats as UTC
+(see [`utc?`](#utc?)) — keeps its fields and is simply labelled UTC.")
+  (defn to-utc [dt]
+    (if (utc? dt)
+      (let-do [nd @dt] (set-tz! &nd (Maybe.Just @&Timezone.utc)) nd)
+      (let-do [delta (Long.to-int
+                 @(Timezone.delta &(Maybe.from @(tz dt) (Timezone.zero))))
+               nd (add-seconds dt (- 0 delta))]
+        (set-tz! &nd (Maybe.Just @&Timezone.utc))
+        nd)))
+
+  (doc in-timezone "returns the `Datetime` `dt` expressed in the timezone
+`target`, preserving the instant: the wall-clock fields are shifted so they name
+the same moment measured in `target`, and the timezone is set to `target`.
+
+```
+(let [dt (Datetime.init 2024 1 1 (Maybe.Just 22) (Maybe.Just 0) (Maybe.Just 0)
+                        (Maybe.Nothing) (Maybe.Just (Timezone.init @\"EST\" -18000l false)))]
+  (Datetime.isotime &(Datetime.in-timezone &dt &Timezone.utc))) ; => \"03:00:00\"
+```")
+  (defn in-timezone [dt target]
+    (let-do [u (to-utc dt)
+             secs (Long.to-int @(Timezone.delta target))
+             nd (add-seconds &u secs)]
+      (set-tz! &nd (Maybe.Just @target))
+      nd))
+
+  (doc equal-instant? "checks whether `a` and `b` name the same instant.
+
+Unlike `=`, which compares the wall-clock fields directly and is timezone-
+unaware, this compares the two `Datetime`s as UTC instants (via
+`to-unix-timestamp`), so e.g. `14:00 EST` and `19:00 UTC` are equal. The
+comparison is to the second, with `nanoseconds` as the tiebreaker.")
+  (defn equal-instant? [a b]
+    (and
+      (= (to-unix-timestamp a) (to-unix-timestamp b))
+      (= (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
+
+  (doc before-instant? "checks whether `a` names an earlier instant than `b`,
+comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
+the timezone-aware counterpart to `<`.")
+  (defn before-instant? [a b]
+    (let [ta (to-unix-timestamp a)
+          tb (to-unix-timestamp b)]
+      (if (/= ta tb)
+        (< ta tb)
+        (< (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0)))))
+
+  (doc after-instant? "checks whether `a` names a later instant than `b`,
+comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
+the timezone-aware counterpart to `>`.")
+  (defn after-instant? [a b] (before-instant? b a))
+
   (doc isoformat "returns the ISO format for the `Datetime` `dt`.
 
 The ISO format is of the form `YYYY-MM-DD`. The time value is not represented.")
