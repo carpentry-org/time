@@ -46,7 +46,7 @@ formatting API.</p>
 weeks from those times.</p>
 <p><code>Timezone</code> represents a timezone with a name, UTC offset, and DST flag.</p>
 <h3>Formatting</h3>
-<pre><code>(load &quot;git@github.com:carpentry-org/time@0.4.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time@0.5.0&quot;)
 
 (defn main []
   (println*
@@ -55,7 +55,7 @@ weeks from those times.</p>
       &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
 </code></pre>
 <h3>Parsing</h3>
-<pre><code>(load &quot;git@github.com:carpentry-org/time@0.4.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time@0.5.0&quot;)
 
 (defn main []
   (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)

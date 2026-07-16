@@ -45,13 +45,13 @@
 formatted using <code>strftime</code>, and parsed using <code>strptime</code>. Both mimic
 <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C formatting API</a>.</p>
 <p>Formatting example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.4.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.5.0&quot;)
 
 (defn main []
   (println* &amp;(Datetime.strftime &amp;(Datetime.now) &quot;%Y-%m-%d %I:%M:%S.%n %p %z&quot;)))
 </code></pre>
 <p>Parsing example:</p>
-<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.4.0&quot;)
+<pre><code>(load &quot;git@github.com:carpentry-org/time.carp@0.5.0&quot;)
 
 (defn main []
   (match (Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
@@ -190,6 +190,50 @@ clamped to February 28.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#after-instant?">
+                        <h3 id="after-instant?">
+                            after-instant?
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Datetime b)] Bool)
+                    </p>
+                    <pre class="args">
+                        (after-instant? a b)
+                    </pre>
+                    <p class="doc">
+                        <p>checks whether <code>a</code> names a later instant than <code>b</code>,
+comparing them as UTC instants (see <a href="#equal-instant?"><code>equal-instant?</code></a>). This is
+the timezone-aware counterpart to <code>&gt;</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#before-instant?">
+                        <h3 id="before-instant?">
+                            before-instant?
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Datetime b)] Bool)
+                    </p>
+                    <pre class="args">
+                        (before-instant? a b)
+                    </pre>
+                    <p class="doc">
+                        <p>checks whether <code>a</code> names an earlier instant than <code>b</code>,
+comparing them as UTC instants (see <a href="#equal-instant?"><code>equal-instant?</code></a>). This is
+the timezone-aware counterpart to <code>&lt;</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#copy">
                         <h3 id="copy">
                             copy
@@ -293,6 +337,30 @@ earlier. This is a timezone-unaware comparison, similar to <code>&gt;</code> and
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#equal-instant?">
+                        <h3 id="equal-instant?">
+                            equal-instant?
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Datetime b)] Bool)
+                    </p>
+                    <pre class="args">
+                        (equal-instant? a b)
+                    </pre>
+                    <p class="doc">
+                        <p>checks whether <code>a</code> and <code>b</code> name the same instant.</p>
+<p>Unlike <code>=</code>, which compares the wall-clock fields directly and is timezone-
+unaware, this compares the two <code>Datetime</code>s as UTC instants (via
+<code>to-unix-timestamp</code>), so e.g. <code>14:00 EST</code> and <code>19:00 UTC</code> are equal. The
+comparison is to the second, with <code>nanoseconds</code> as the tiebreaker.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#format">
                         <h3 id="format">
                             format
@@ -372,6 +440,32 @@ timestamp <code>ts</code>, i.e. the number of seconds elapsed since the 1st of J
                     </span>
                     <p class="doc">
                         <p>gets the <code>hours</code> property of a <code>Datetime</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#in-timezone">
+                        <h3 id="in-timezone">
+                            in-timezone
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a), (Ref Timezone b)] Datetime)
+                    </p>
+                    <pre class="args">
+                        (in-timezone dt target)
+                    </pre>
+                    <p class="doc">
+                        <p>returns the <code>Datetime</code> <code>dt</code> expressed in the timezone
+<code>target</code>, preserving the instant: the wall-clock fields are shifted so they name
+the same moment measured in <code>target</code>, and the timezone is set to <code>target</code>.</p>
+<pre><code>(let [dt (Datetime.init 2024 1 1 (Maybe.Just 22) (Maybe.Just 0) (Maybe.Just 0)
+                        (Maybe.Nothing) (Maybe.Just (Timezone.init @&quot;EST&quot; -18000l false)))]
+  (Datetime.isotime &amp;(Datetime.in-timezone &amp;dt &amp;Timezone.utc))) ; =&gt; &quot;03:00:00&quot;
+</code></pre>
 
                     </p>
                 </div>
@@ -1129,6 +1223,30 @@ they are consumed but do not set the date.</p>
                         <p>returns the representation of the <code>Datetime</code> <code>dt</code> as
 a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
 1970.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#to-utc">
+                        <h3 id="to-utc">
+                            to-utc
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Datetime a)] Datetime)
+                    </p>
+                    <pre class="args">
+                        (to-utc dt)
+                    </pre>
+                    <p class="doc">
+                        <p>returns the <code>Datetime</code> <code>dt</code> expressed in UTC.</p>
+<p>The wall-clock fields are shifted by the timezone offset (<code>delta</code>) so they name
+the same instant in UTC, and the timezone is set to <code>Timezone.utc</code>. A <code>Datetime</code>
+that is already UTC — or that has no timezone, which the library treats as UTC
+(see <a href="#utc?"><code>utc?</code></a>) — keeps its fields and is simply labelled UTC.</p>
 
                     </p>
                 </div>
