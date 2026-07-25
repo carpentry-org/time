@@ -612,6 +612,34 @@
                       (Maybe.Just @&Timezone.utc)))
     "before-instant? uses nanoseconds as a tiebreaker within a second")
 
+  ; --- instant-aware comparison past 2038 ---
+  (assert-true test
+    (Datetime.after-instant? &(at-tz 2100 1 1 0 0 0 @&Timezone.utc)
+                             &(at-tz 2026 1 1 0 0 0 @&Timezone.utc))
+    "after-instant? orders 2100 after 2026")
+  (assert-false test
+    (Datetime.before-instant? &(at-tz 2100 1 1 0 0 0 @&Timezone.utc)
+                              &(at-tz 2026 1 1 0 0 0 @&Timezone.utc))
+    "before-instant? does not order 2100 before 2026")
+  (assert-true test
+    (Datetime.after-instant? &(at-tz 9999 12 31 0 0 0 @&Timezone.utc)
+                             &(at-tz 2026 1 1 0 0 0 @&Timezone.utc))
+    "after-instant? orders 9999 after 2026")
+  ; the two seconds straddling the 32-bit epoch cliff
+  (assert-true test
+    (Datetime.before-instant? &(at-tz 2038 1 19 3 14 7 @&Timezone.utc)
+                              &(at-tz 2038 1 19 3 14 8 @&Timezone.utc))
+    "before-instant? orders across 2038-01-19 03:14:07")
+  (assert-false test
+    (Datetime.equal-instant? &(at-tz 2100 1 1 0 0 0 @&Timezone.utc)
+                             &(at-tz 1963 11 25 17 31 44 @&Timezone.utc))
+    "equal-instant? does not alias 2100 onto its wrapped pre-epoch date")
+  (assert-true test
+    (Datetime.equal-instant?
+      &(at-tz 2100 1 1 14 0 0 (Timezone.init @"EST" -18000l false))
+      &(at-tz 2100 1 1 19 0 0 @&Timezone.utc))
+    "equal-instant? stays timezone-aware past 2038")
+
   (assert-equal test
     &@"00:00:30"
     &(Datetime.isotime

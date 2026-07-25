@@ -397,32 +397,6 @@ the same moment measured in `target`, and the timezone is set to `target`.
       (set-tz! &nd (Maybe.Just @target))
       nd))
 
-  (doc equal-instant? "checks whether `a` and `b` name the same instant.
-
-Unlike `=`, which compares the wall-clock fields directly and is timezone-
-unaware, this compares the two `Datetime`s as UTC instants (via
-`to-unix-timestamp`), so e.g. `14:00 EST` and `19:00 UTC` are equal. The
-comparison is to the second, with `nanoseconds` as the tiebreaker.")
-  (defn equal-instant? [a b]
-    (and
-      (= (to-unix-timestamp a) (to-unix-timestamp b))
-      (= (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
-
-  (doc before-instant? "checks whether `a` names an earlier instant than `b`,
-comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
-the timezone-aware counterpart to `<`.")
-  (defn before-instant? [a b]
-    (let [ta (to-unix-timestamp a)
-          tb (to-unix-timestamp b)]
-      (if (/= ta tb)
-        (< ta tb)
-        (< (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0)))))
-
-  (doc after-instant? "checks whether `a` names a later instant than `b`,
-comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
-the timezone-aware counterpart to `>`.")
-  (defn after-instant? [a b] (before-instant? b a))
-
   (doc isoformat "returns the ISO format for the `Datetime` `dt`.
 
 The ISO format is of the form `YYYY-MM-DD`. The time value is not represented.")
@@ -1052,6 +1026,26 @@ optional ones.")
                   (< (Maybe.from @(nanoseconds a) 0)
                      (Maybe.from @(nanoseconds b) 0))))))))))
   (implements < Datetime.<)
+
+  (doc equal-instant? "checks whether `a` and `b` name the same instant.
+
+Unlike `=`, which compares the wall-clock fields directly and is timezone-
+unaware, this compares the two `Datetime`s as UTC instants (via
+[`to-utc`](#to-utc)), so e.g. `14:00 EST` and `19:00 UTC` are equal. The
+comparison is to the second, with `nanoseconds` as the tiebreaker.")
+  (defn equal-instant? [a b]
+    (let [ua (to-utc a)
+          ub (to-utc b)] (and (not (< &ua &ub)) (not (> &ua &ub)))))
+
+  (doc before-instant? "checks whether `a` names an earlier instant than `b`,
+comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
+the timezone-aware counterpart to `<`.")
+  (defn before-instant? [a b] (< &(to-utc a) &(to-utc b)))
+
+  (doc after-instant? "checks whether `a` names a later instant than `b`,
+comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
+the timezone-aware counterpart to `>`.")
+  (defn after-instant? [a b] (before-instant? b a))
 
   (doc diff "returns the signed difference in seconds between `a` and `b`.
 
