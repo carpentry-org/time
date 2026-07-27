@@ -682,6 +682,62 @@
                         (Maybe.Nothing))
         3600))
     "add 3600 seconds is one hour")
+  (assert-equal test
+    &@"2088-01-20 03:14:06"
+    &(stamp
+      &(Datetime.add-seconds
+        &(Datetime.init 2020
+                        1
+                        1
+                        (Maybe.Just 23)
+                        (Maybe.Just 59)
+                        (Maybe.Just 59)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        2147483647))
+    "add Int.MAX seconds to a non-zero seconds field")
+  (assert-equal test
+    &@"1951-12-14 20:45:51"
+    &(stamp
+      &(Datetime.add-seconds
+        &(Datetime.init 2020
+                        1
+                        1
+                        (Maybe.Just 23)
+                        (Maybe.Just 59)
+                        (Maybe.Just 59)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        -2147483648))
+    "add Int.MIN seconds to a non-zero seconds field")
+  (assert-equal test
+    &@"2063-05-18 03:33:19"
+    &(stamp
+      &(Datetime.add-seconds
+        &(Datetime.init 1999
+                        12
+                        31
+                        (Maybe.Just 23)
+                        (Maybe.Just 59)
+                        (Maybe.Just 59)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        2000000000))
+    "add 2000000000 seconds")
+  (assert-equal test
+    &@"2056-09-09 01:46:39"
+    &(stamp
+      &(Datetime.add-seconds
+        &(Datetime.init 2024
+                        12
+                        31
+                        (Maybe.Just 23)
+                        (Maybe.Just 59)
+                        (Maybe.Just 59)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        1000000000))
+    "add 1000000000 seconds")
 
   (assert-equal test
     &@"2024-03-15"
