@@ -265,6 +265,53 @@ and `2024-12-30` is week `01` of `2025`.")
           (set! week 0)))
       [y (Int.inc week) (isoweekday dt)]))
 
+  (private long-iso-year?)
+  (hidden long-iso-year?)
+  ; a 53-week ISO year spans 371 days from one week-1 Monday to the next
+  (defn long-iso-year? [y]
+    (= 371 (- (iso-week1-monday (Int.inc y)) (iso-week1-monday y))))
+
+  (private date-from-yearday)
+  (hidden date-from-yearday)
+  (defn date-from-yearday [y j]
+    (cond
+      (< y 1) (Result.Error @"%j needs a year of 1 or later")
+      (> j (if (is-leap y) 366 365))
+        (Result.Error
+          (String.concat
+            &[@"%j out of range for " (Int.str y) @": " (Int.str j)]))
+      (Result.Success (from-ordinal (+ (Int.dec (ymd2ord y 1 1)) j)))))
+
+  (private date-from-isoweek)
+  (hidden date-from-isoweek)
+  ; `wd` is Monday-based, as in `weekday`
+  (defn date-from-isoweek [y w wd]
+    (cond
+      (< y 1) (Result.Error @"%G needs a year of 1 or later")
+      (and (= w 53) (not (long-iso-year? y)))
+        (Result.Error
+          (String.concat
+            &[@"%V out of range: ISO year " (Int.str y) @" has 52 weeks"]))
+      (Result.Success
+        (from-ordinal (+ (iso-week1-monday y) (+ (* (Int.dec w) 7) wd))))))
+
+  (private date-from-week)
+  (hidden date-from-week)
+  ; week 0 holds the days before the year’s first Monday (%W) or Sunday (%U)
+  (defn date-from-week [y w wd monday?]
+    (let [jan1 (ymd2ord y 1 1)
+          start (+ jan1 (mod (- 7 (mod (+ jan1 (if monday? 6 0)) 7)) 7))
+          ord (+ start
+                 (+ (* (Int.dec w) 7) (if monday? wd (mod (Int.inc wd) 7))))
+          spec (if monday? @"%W" @"%U")]
+      (cond
+        (< y 1)
+          (Result.Error (String.concat &[spec @" needs a year of 1 or later"]))
+        (or (< ord jan1) (> ord (ymd2ord y 12 31)))
+          (Result.Error
+            (String.concat &[spec @" and weekday fall outside " (Int.str y)]))
+        (Result.Success (from-ordinal ord)))))
+
   (doc add-seconds "adds a number of seconds `n` to a `Datetime`.
 
 If `n` is negative, it will be subtracted instead.")
@@ -562,6 +609,14 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
         (Int.from-string &tok))
       (Maybe.Nothing)))
 
+  (private parse-ranged)
+  (hidden parse-ranged)
+  (defn parse-ranged [s pos n lo hi]
+    (match (parse-digits s pos n)
+      (Maybe.Just v)
+        (if (and (>= v lo) (<= v hi)) (Maybe.Just v) (Maybe.Nothing))
+      (Maybe.Nothing) (Maybe.Nothing)))
+
   (private match-in-array)
   (hidden match-in-array)
   (defn match-in-array [arr s pos]
@@ -668,13 +723,15 @@ The format specifiers mirror those of `strftime`:
 - `%n` — 9-digit nanoseconds
 - `%z` — timezone offset (+HHMM or -HHMM)
 - `%Z` — timezone name (alphabetic characters)
-- `%a` — abbreviated weekday (parsed and discarded)
-- `%A` — full weekday (parsed and discarded)
-- `%w` — weekday number (parsed and discarded)
-- `%j` — day of year (parsed and discarded)
-- `%U`, `%W`, `%V` — week number (parsed and discarded)
-- `%G` — ISO week-based year (parsed and discarded)
-- `%u` — ISO weekday, 1–7 (parsed and discarded)
+- `%a` — abbreviated weekday name (Mon, Tue, ...)
+- `%A` — full weekday name (Monday, Tuesday, ...)
+- `%w` — weekday number, Monday first (0–6), as `strftime` writes it
+- `%u` — ISO weekday, Monday first (1–7)
+- `%j` — day of year (001–366)
+- `%U` — week of year, Sunday first (00–53)
+- `%W` — week of year, Monday first (00–53)
+- `%V` — ISO week number (01–53)
+- `%G` — ISO week-based year
 - `%c` — locale datetime (expands to `%a %b %d %H:%M:%S %Y`)
 - `%x` — ISO date (expands to `%Y-%m-%d`)
 - `%X` — ISO time (expands to `%H:%M:%S`)
@@ -685,8 +742,19 @@ The format specifiers mirror those of `strftime`:
 - `%r` — 12-hour clock time (expands to `%I:%M:%S %p`)
 - `%h` — abbreviated month name (alias of `%b`)
 
-Reconstructing a date from the ISO week fields (`%G`/`%V`/`%u`) is not supported;
-they are consumed but do not set the date.
+An explicit calendar date wins: if the format supplies both a month (`%m`, `%b`
+or `%B`) and a day (`%d`), the date comes from those, and the week and
+day-of-year fields are only range-checked. Otherwise the date is reconstructed
+from the first complete set of
+
+1. a year (`%Y`/`%y`) and `%j`,
+2. `%G`, `%V` and a weekday (`%u`, `%w`, `%a` or `%A`),
+3. a year, `%U` or `%W`, and a weekday.
+
+An incomplete set is an error rather than a silently wrong date, as is a value
+impossible for its year: `%j` past the end of the year, `%V` of `53` in a
+52-week ISO year, or a `%U`/`%W` week and weekday landing outside the year. A
+weekday on its own carries no date and is ignored.
 
 Example:
 ```
@@ -699,8 +767,15 @@ Example:
              flen (String.length &efmt)
              ilen (String.length input)
              yr 0
+             has-year false
              mo 0
              dy 0
+             jd 0
+             iso-y 0
+             iso-w 0
+             wk -1
+             wk-monday? false
+             wd -1
              hr -1
              mi -1
              sc -1
@@ -722,6 +797,7 @@ Example:
                         (Maybe.Just v)
                           (do
                             (set! yr v)
+                            (set! has-year true)
                             (set! ipos (+ ipos 4))
                             (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
@@ -731,6 +807,7 @@ Example:
                         (Maybe.Just v)
                           (do
                             (set! yr (if (< v 69) (+ v 2000) (+ v 1900)))
+                            (set! has-year true)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
@@ -841,12 +918,16 @@ Example:
                                                       input
                                                       ipos)]
                         (if (> idx 0)
-                          (do (set! ipos (+ ipos 3)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! wd (Int.dec idx))
+                            (set! ipos (+ ipos 3))
+                            (set! fpos (+ fpos 2)))
                           (do (set! err @"failed to parse %a") (set! ok false))))
                       \A
                       (let [idx (match-in-array &WEEKDAY-STRINGS input ipos)]
                         (if (> idx 0)
                           (do
+                            (set! wd (Int.dec idx))
                             (set! ipos
                                   (+ ipos
                                      (String.length (Array.unsafe-nth &WEEKDAY-STRINGS
@@ -854,47 +935,82 @@ Example:
                             (set! fpos (+ fpos 2)))
                           (do (set! err @"failed to parse %A") (set! ok false))))
                       \w
-                      (match (parse-digits input ipos 1)
+                      (match (parse-ranged input ipos 1 0 6)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! wd v)
+                            (set! ipos (+ ipos 1))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
-                          (do (set! err @"failed to parse %w") (set! ok false)))
+                          (do
+                            (set! err @"failed to parse %w: expected 0-6")
+                            (set! ok false)))
                       \j
-                      (match (parse-digits input ipos 3)
+                      (match (parse-ranged input ipos 3 1 366)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 3)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! jd v)
+                            (set! ipos (+ ipos 3))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
-                          (do (set! err @"failed to parse %j") (set! ok false)))
+                          (do
+                            (set! err @"failed to parse %j: expected 001-366")
+                            (set! ok false)))
                       \U
-                      (match (parse-digits input ipos 2)
+                      (match (parse-ranged input ipos 2 0 53)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! wk v)
+                            (set! wk-monday? false)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
-                          (do (set! err @"failed to parse %U") (set! ok false)))
+                          (do
+                            (set! err @"failed to parse %U: expected 00-53")
+                            (set! ok false)))
                       \W
-                      (match (parse-digits input ipos 2)
+                      (match (parse-ranged input ipos 2 0 53)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! wk v)
+                            (set! wk-monday? true)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
-                          (do (set! err @"failed to parse %W") (set! ok false)))
+                          (do
+                            (set! err @"failed to parse %W: expected 00-53")
+                            (set! ok false)))
                       \V
-                      (match (parse-digits input ipos 2)
+                      (match (parse-ranged input ipos 2 1 53)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 2)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! iso-w v)
+                            (set! ipos (+ ipos 2))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
-                          (do (set! err @"failed to parse %V") (set! ok false)))
+                          (do
+                            (set! err @"failed to parse %V: expected 01-53")
+                            (set! ok false)))
                       \G
-                      (match (parse-digits input ipos 4)
+                      (match (parse-ranged input ipos 4 1 9999)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 4)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! iso-y v)
+                            (set! ipos (+ ipos 4))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
                           (do (set! err @"failed to parse %G") (set! ok false)))
                       \u
-                      (match (parse-digits input ipos 1)
+                      (match (parse-ranged input ipos 1 1 7)
                         (Maybe.Just v)
-                          (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 2)))
+                          (do
+                            (set! wd (Int.dec v))
+                            (set! ipos (+ ipos 1))
+                            (set! fpos (+ fpos 2)))
                         (Maybe.Nothing)
-                          (do (set! err @"failed to parse %u") (set! ok false)))
+                          (do
+                            (set! err @"failed to parse %u: expected 1-7")
+                            (set! ok false)))
                       \z
                       (if (> (+ ipos 5) ilen)
                         (do (set! err @"failed to parse %z") (set! ok false))
@@ -953,21 +1069,47 @@ Example:
                       &[@"unexpected character at position " (Int.str ipos)]))
               (set! ok false)))))
       (if ok
-        (let [final-hr (cond
-                (= ampm 2) (if (< hr 12) (+ hr 12) hr)
-                (= ampm 1) (if (= hr 12) 0 hr)
-                hr)
-              hours-val (if (= final-hr -1)
-                (Maybe.Nothing)
-                (Maybe.Just final-hr))
-              minutes-val (if (= mi -1) (Maybe.Nothing) (Maybe.Just mi))
-              seconds-val (if (= sc -1) (Maybe.Nothing) (Maybe.Just sc))
-              ns-val (if (= ns -1) (Maybe.Nothing) (Maybe.Just ns))
-              tz-val (if has-tz
-                (Maybe.Just (Timezone.init @&tz-nm tz-delta false))
-                (Maybe.Nothing))]
-          (Result.Success
-            (init yr mo dy hours-val minutes-val seconds-val ns-val tz-val)))
+        (match (cond
+            (and (> mo 0) (> dy 0)) (Result.Success (date yr mo dy))
+            (> jd 0)
+              (if has-year
+                (date-from-yearday yr jd)
+                (Result.Error @"%j needs a year (%Y or %y)"))
+            (or (> iso-y 0) (> iso-w 0))
+              (if (and (> iso-y 0) (and (> iso-w 0) (> wd -1)))
+                (date-from-isoweek iso-y iso-w wd)
+                (Result.Error
+                  @"ISO week dates need %G, %V and a weekday (%u, %w, %a or %A)"))
+            (> wk -1)
+              (if (and has-year (> wd -1))
+                (date-from-week yr wk wd wk-monday?)
+                (Result.Error
+                  @"%U and %W need a year and a weekday (%u, %w, %a or %A)"))
+            (Result.Success (date yr mo dy)))
+          (Result.Error e) (Result.Error e)
+          (Result.Success d)
+            (let [final-hr (cond
+                    (= ampm 2) (if (< hr 12) (+ hr 12) hr)
+                    (= ampm 1) (if (= hr 12) 0 hr)
+                    hr)
+                  hours-val (if (= final-hr -1)
+                    (Maybe.Nothing)
+                    (Maybe.Just final-hr))
+                  minutes-val (if (= mi -1) (Maybe.Nothing) (Maybe.Just mi))
+                  seconds-val (if (= sc -1) (Maybe.Nothing) (Maybe.Just sc))
+                  ns-val (if (= ns -1) (Maybe.Nothing) (Maybe.Just ns))
+                  tz-val (if has-tz
+                    (Maybe.Just (Timezone.init @&tz-nm tz-delta false))
+                    (Maybe.Nothing))]
+              (Result.Success
+                (init @(year &d)
+                      @(month &d)
+                      @(day &d)
+                      hours-val
+                      minutes-val
+                      seconds-val
+                      ns-val
+                      tz-val))))
         (Result.Error @&err))))
 
   (doc = "is defined as the equality of all members of `a` and `b`, even the

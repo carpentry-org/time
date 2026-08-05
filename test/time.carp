@@ -17,6 +17,32 @@
 ; render a Datetime as "YYYY-MM-DD HH:MM:SS" for whole-instant comparisons.
 (defn stamp [dt] (fmt "%s %s" &(Datetime.isoformat dt) &(Datetime.isotime dt)))
 
+; sweep range: two leap years, two 53-week ISO years (2020 and 2026)
+(def SWEEP-FROM (Datetime.to-ordinal &(Datetime.date 2018 1 1)))
+(def SWEEP-TO (Datetime.to-ordinal &(Datetime.date 2026 12 31)))
+
+; round-trips every date from ordinal `from` to `to`, returning the first failure
+(defn roundtrip-sweep [from to f]
+  (let-do [bad @""
+           ord from]
+    (while-do (and (String.empty? &bad) (<= ord to))
+      (let [d (Datetime.from-ordinal ord)
+            s (Datetime.strftime &d f)]
+        (match (Datetime.strptime &s f)
+          (Result.Success p)
+            (unless (Datetime.= &p &d)
+              (set! bad
+                    (fmt "%s: %s -> %s -> %s"
+                         f
+                         &(Datetime.isoformat &d)
+                         &s
+                         &(Datetime.isoformat &p))))
+          (Result.Error e)
+            (set! bad
+                  (fmt "%s: %s -> %s -> %s" f &(Datetime.isoformat &d) &s &e))))
+      (set! ord (Int.inc ord)))
+    bad))
+
 (deftest test
   (assert-equal test
     2024
@@ -1265,6 +1291,100 @@
         "%Y-%m-%d %H:%M:%S")
       "%Y-%m-%d %H:%M:%S")
     "strptime roundtrips with strftime for datetime")
+
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 4 9))
+    &(Datetime.strptime "2024-100" "%Y-%j")
+    "strptime rebuilds the date from %j")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 2 29))
+    &(Datetime.strptime "2024-060" "%Y-%j")
+    "strptime %j reaches the leap day")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2023-366" "%Y-%j"))
+    "strptime rejects day 366 of a common year")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "100" "%j"))
+    "strptime rejects %j without a year")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024-03-15 100" "%Y-%m-%d %j")
+    "strptime prefers an explicit calendar date over %j")
+
+  (assert-equal test
+    &(Result.Success (Datetime.date 2023 1 1))
+    &(Datetime.strptime "2022-W52-7" "%G-W%V-%u")
+    "strptime rebuilds 2023-01-01 from 2022-W52-7")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 12 30))
+    &(Datetime.strptime "2025-W01-1" "%G-W%V-%u")
+    "strptime rebuilds 2024-12-30 from 2025-W01-1")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2021 1 3))
+    &(Datetime.strptime "2020-W53-7" "%G-W%V-%u")
+    "strptime reaches week 53 of a 53-week ISO year")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2021-W53-7" "%G-W%V-%u"))
+    "strptime rejects week 53 of a 52-week ISO year")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-W54-1" "%G-W%V-%u"))
+    "strptime rejects %V outside 01-53")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "W15-3" "W%V-%u"))
+    "strptime rejects an ISO week date without %G")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-W15" "%G-W%V"))
+    "strptime rejects an ISO week date without a weekday")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-8" "%Y-%u"))
+    "strptime rejects %u outside 1-7")
+
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024 11 4" "%Y %W %w")
+    "strptime rebuilds the date from %W and %w")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 22))
+    &(Datetime.strptime "2024 11 4" "%Y %U %w")
+    "strptime rebuilds the date from %U and %w")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024 11 Friday" "%Y %W %A")
+    "strptime takes the weekday for %W from %A")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024 11" "%Y %W"))
+    "strptime rejects a week of the year without a weekday")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024 00 6" "%Y %U %w"))
+    "strptime rejects a %U week and weekday falling outside the year")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-7" "%Y-%w"))
+    "strptime rejects %w outside 0-6")
+
+  (assert-equal test
+    &@""
+    &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%Y-%j")
+    "every date in the sweep survives a %Y-%j roundtrip")
+  (assert-equal test
+    &@""
+    &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%G-W%V-%u")
+    "every date in the sweep survives a %G-W%V-%u roundtrip")
+  (assert-equal test
+    &@""
+    &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%G-W%V-%a")
+    "every date in the sweep survives a %G-W%V-%a roundtrip")
+  (assert-equal test
+    &@""
+    &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%Y %U %w")
+    "every date in the sweep survives a %Y %U %w roundtrip")
+  (assert-equal test
+    &@""
+    &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%Y %W %w")
+    "every date in the sweep survives a %Y %W %w roundtrip")
+  (assert-equal test
+    &@""
+    &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%Y %W %A")
+    "every date in the sweep survives a %Y %W %A roundtrip")
 
   (assert-true test
     (= &(Datetime.date 2024 3 15) &(Datetime.date 2024 3 15))

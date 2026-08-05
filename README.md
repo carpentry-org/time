@@ -86,9 +86,13 @@ mirroring [the C formatting API](http://www.cplusplus.com/reference/ctime/strfti
 | `%h`      | Abbreviated month (alias `%b`) | `Mar`            |
 | `%%`      | Literal `%`                    | `%`              |
 
-When parsing with `strptime`, specifiers `%a`, `%A`, `%w`, `%j`, `%U`, `%W`,
-`%V`, `%G`, and `%u` are consumed from the input but discarded, since they
-represent derived values that are fully determined by the date.
+When parsing with `strptime`, an explicit calendar date wins: if the format
+supplies both a month (`%m`, `%b` or `%B`) and a day (`%d`), the date comes from
+those and the week and day-of-year fields are only range-checked. Otherwise the
+date is reconstructed from a year plus `%j`, from `%G`/`%V` plus a weekday, or
+from a year, `%U` or `%W`, and a weekday. An incomplete set — or a value
+impossible for its year, like `%V` of `53` in a 52-week ISO year — is an error.
+A weekday on its own carries no date and is ignored.
 
 ### Durations
 
