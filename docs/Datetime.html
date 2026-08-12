@@ -355,7 +355,7 @@ earlier. This is a timezone-unaware comparison, similar to <code>&gt;</code> and
                         <p>checks whether <code>a</code> and <code>b</code> name the same instant.</p>
 <p>Unlike <code>=</code>, which compares the wall-clock fields directly and is timezone-
 unaware, this compares the two <code>Datetime</code>s as UTC instants (via
-<code>to-unix-timestamp</code>), so e.g. <code>14:00 EST</code> and <code>19:00 UTC</code> are equal. The
+<a href="#to-utc"><code>to-utc</code></a>), so e.g. <code>14:00 EST</code> and <code>19:00 UTC</code> are equal. The
 comparison is to the second, with <code>nanoseconds</code> as the tiebreaker.</p>
 
                     </p>
@@ -1159,13 +1159,15 @@ returning a <code>(Result Datetime String)</code>.</p>
 <li><code>%n</code> — 9-digit nanoseconds</li>
 <li><code>%z</code> — timezone offset (+HHMM or -HHMM)</li>
 <li><code>%Z</code> — timezone name (alphabetic characters)</li>
-<li><code>%a</code> — abbreviated weekday (parsed and discarded)</li>
-<li><code>%A</code> — full weekday (parsed and discarded)</li>
-<li><code>%w</code> — weekday number (parsed and discarded)</li>
-<li><code>%j</code> — day of year (parsed and discarded)</li>
-<li><code>%U</code>, <code>%W</code>, <code>%V</code> — week number (parsed and discarded)</li>
-<li><code>%G</code> — ISO week-based year (parsed and discarded)</li>
-<li><code>%u</code> — ISO weekday, 1–7 (parsed and discarded)</li>
+<li><code>%a</code> — abbreviated weekday name (Mon, Tue, ...)</li>
+<li><code>%A</code> — full weekday name (Monday, Tuesday, ...)</li>
+<li><code>%w</code> — weekday number, Monday first (0–6), as <code>strftime</code> writes it</li>
+<li><code>%u</code> — ISO weekday, Monday first (1–7)</li>
+<li><code>%j</code> — day of year (001–366)</li>
+<li><code>%U</code> — week of year, Sunday first (00–53)</li>
+<li><code>%W</code> — week of year, Monday first (00–53)</li>
+<li><code>%V</code> — ISO week number (01–53)</li>
+<li><code>%G</code> — ISO week-based year</li>
 <li><code>%c</code> — locale datetime (expands to <code>%a %b %d %H:%M:%S %Y</code>)</li>
 <li><code>%x</code> — ISO date (expands to <code>%Y-%m-%d</code>)</li>
 <li><code>%X</code> — ISO time (expands to <code>%H:%M:%S</code>)</li>
@@ -1176,8 +1178,19 @@ returning a <code>(Result Datetime String)</code>.</p>
 <li><code>%r</code> — 12-hour clock time (expands to <code>%I:%M:%S %p</code>)</li>
 <li><code>%h</code> — abbreviated month name (alias of <code>%b</code>)</li>
 </ul>
-<p>Reconstructing a date from the ISO week fields (<code>%G</code>/<code>%V</code>/<code>%u</code>) is not supported;
-they are consumed but do not set the date.</p>
+<p>An explicit calendar date wins: if the format supplies both a month (<code>%m</code>, <code>%b</code>
+or <code>%B</code>) and a day (<code>%d</code>), the date comes from those, and the week and
+day-of-year fields are only range-checked. Otherwise the date is reconstructed
+from the first complete set of</p>
+<ol>
+<li>a year (<code>%Y</code>/<code>%y</code>) and <code>%j</code>,</li>
+<li><code>%G</code>, <code>%V</code> and a weekday (<code>%u</code>, <code>%w</code>, <code>%a</code> or <code>%A</code>),</li>
+<li>a year, <code>%U</code> or <code>%W</code>, and a weekday.</li>
+</ol>
+<p>An incomplete set is an error rather than a silently wrong date, as is a value
+impossible for its year: <code>%j</code> past the end of the year, <code>%V</code> of <code>53</code> in a
+52-week ISO year, or a <code>%U</code>/<code>%W</code> week and weekday landing outside the year. A
+weekday on its own carries no date and is ignored.</p>
 <p>Example:</p>
 <pre><code>(Datetime.strptime &quot;2024-03-15 14:30:00&quot; &quot;%Y-%m-%d %H:%M:%S&quot;)
 </code></pre>
