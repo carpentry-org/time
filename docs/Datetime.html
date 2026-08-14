@@ -1108,7 +1108,7 @@ and <code>2024-12-30</code> is week <code>01</code> of <code>2025</code>.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [a, (Ref String b)] String)
+                        (Fn [(Ref Datetime a), (Ref String b)] String)
                     </p>
                     <pre class="args">
                         (strftime dt s)
@@ -1116,6 +1116,9 @@ and <code>2024-12-30</code> is week <code>01</code> of <code>2025</code>.</p>
                     <p class="doc">
                         <p>formats the <code>Datetime</code> <code>dt</code> according to the string provided
 in <code>s</code>. The formatting options mimic <a href="http://www.cplusplus.com/reference/ctime/strftime/">the C interface</a>.</p>
+<p>Text outside a directive is copied verbatim. <code>%%</code> renders a single <code>%</code>, as does
+a trailing <code>%</code> with nothing after it; an unrecognized specifier renders as the
+character that follows the <code>%</code>.</p>
 <p>You can alternatively use the <code>fmt</code> macro or <code>format</code> function, but you’ll only
 be able to use one of the formatting properties there. Thus this function is
 provided as a convenience for fine-grained string tweaking.</p>

@@ -480,8 +480,14 @@ All of the time information is obtained from the operating system directly.")
   (register format (Fn [(Ref String) (Ref Datetime)] String))
   (implements format Datetime.format)
 
+  (register format-for (Fn [Char (Ref Datetime)] String))
+
   (doc strftime "formats the `Datetime` `dt` according to the string provided
 in `s`. The formatting options mimic [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
+
+Text outside a directive is copied verbatim. `%%` renders a single `%`, as does
+a trailing `%` with nothing after it; an unrecognized specifier renders as the
+character that follows the `%`.
 
 You can alternatively use the `fmt` macro or `format` function, but you’ll only
 be able to use one of the formatting properties there. Thus this function is
@@ -493,18 +499,29 @@ Example:
 &(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")
 ```")
   (defn strftime [dt s]
-    (let [strings (String.split-by s &[\%])
-          ln (Int.dec (Array.length &strings))
-          rng (Result.from-success (Array.range 0 ln 1) [])]
-      (String.concat
-        &(Array.zip
-          &(fn [x i]
-            (cond
-              (and (String.empty? x) (or (= i &0) (= i &ln))) @""
-              (String.empty? x) @"%"
-              (format &(String.concat &[@"%" @x]) dt)))
-          &strings
-          &rng))))
+    (let-do [result @""
+             len (String.length s)
+             i 0
+             lit 0]
+      (while (< i len)
+        (if (= \% (String.char-at s i))
+          (do
+            (when (< lit i)
+              (set! result (String.concat &[result (String.byte-slice s lit i)])))
+            (if (< (Int.inc i) len)
+              (let-do [spec (String.char-at s (Int.inc i))]
+                (set! result
+                      (String.concat
+                        &[result (if (= \% spec) @"%" (format-for spec dt))]))
+                (set! i (+ i 2)))
+              (do
+                (set! result (String.concat &[result @"%"]))
+                (set! i (Int.inc i))))
+            (set! lit i))
+          (set! i (Int.inc i))))
+      (when (< lit len)
+        (set! result (String.concat &[result (String.byte-slice s lit len)])))
+      result))
 
   (private format-for)
   (hidden format-for)
@@ -594,11 +611,13 @@ Example:
 It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).")
   (defn format [s dt]
     (let [idx (String.index-of s \%)
-          formatter (String.char-at s (Int.inc idx))]
-      (String.concat
-        &[(String.prefix s idx)
-          (format-for formatter dt)
-          (String.suffix s (+ idx 2))])))
+          len (String.length s)]
+      (if (or (< idx 0) (= idx (Int.dec len)))
+        @s
+        (String.concat
+          &[(String.byte-slice s 0 idx)
+            (format-for (String.char-at s (Int.inc idx)) dt)
+            (String.byte-slice s (+ idx 2) len)]))))
 
   (private parse-digits)
   (hidden parse-digits)

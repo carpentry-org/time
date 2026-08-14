@@ -998,6 +998,68 @@
     &@"Mar"
     &(Datetime.strftime &(Datetime.date 2024 3 15) "%h")
     "strftime %h aliases the abbreviated month name")
+
+  (assert-equal test
+    &@"Date: 2024"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "Date: %Y")
+    "strftime keeps a leading literal")
+  (assert-equal test
+    &@"Day 15, ok"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "Day %d, ok")
+    "strftime keeps a leading literal starting with a specifier letter")
+  (assert-equal test
+    &@"zzz 2024"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "zzz %Y")
+    "strftime keeps a leading literal starting with a tz specifier letter")
+  (assert-equal test
+    &@"hello"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "hello")
+    "strftime passes through a format with no directive")
+  (assert-equal test
+    &@""
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "")
+    "strftime renders the empty format as the empty string")
+  (assert-equal test
+    &@"100% done 2024"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "100%% done %Y")
+    "strftime renders %% as a literal percent")
+  (assert-equal test
+    &@"%Y"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%%Y")
+    "strftime does not expand the letter after an escaped percent")
+  (assert-equal test
+    &@"%2024"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%%%Y")
+    "strftime resumes directives after an escaped percent")
+  (assert-equal test
+    &@"Q"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%Q")
+    "strftime renders an unknown specifier as the character itself")
+  (assert-equal test
+    &@"2024%"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%Y%")
+    "strftime renders a trailing lone percent as a literal percent")
+  (assert-equal test
+    &@"%"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "%")
+    "strftime renders a lone percent as a literal percent")
+  (assert-equal test
+    &@"Größe: 2024 μs"
+    &(Datetime.strftime &(Datetime.date 2024 3 15) "Größe: %Y μs")
+    "strftime copies non-ASCII literals verbatim")
+  (assert-equal test
+    &@"Größe: 2024"
+    &(Datetime.format "Größe: %Y" &(Datetime.date 2024 3 15))
+    "format slices non-ASCII literals by byte")
+  (assert-equal test
+    &@"Größe: 2024"
+    &(fmt "Größe: %Y" &(Datetime.date 2024 3 15))
+    "fmt reaches format with a non-ASCII literal")
+  (assert-equal test
+    &@"hello"
+    &(Datetime.format "hello" &(Datetime.date 2024 3 15))
+    "format passes through a slice with no directive")
+
   (assert-equal test
     &(Result.Success (Datetime.date 2024 3 15))
     &(Datetime.strptime "2024-03-15 11" "%Y-%m-%d %V")
