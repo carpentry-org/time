@@ -1090,6 +1090,7 @@ Example:
           (Result.Error e) (Result.Error e)
           (Result.Success d)
             (let [final-hr (cond
+                    (= hr -1) hr
                     (= ampm 2) (if (< hr 12) (+ hr 12) hr)
                     (= ampm 1) (if (= hr 12) 0 hr)
                     hr)

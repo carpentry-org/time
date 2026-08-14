@@ -1153,6 +1153,31 @@
     "strptime %I %p parses 12 PM as 12")
 
   (assert-equal test
+    -1
+    (match (Datetime.strptime "PM 2024-03-15" "%p %Y-%m-%d")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) -1)
+      (Result.Error _) -2)
+    "strptime %p with no hour specifier leaves the hour unset (PM)")
+  (assert-equal test
+    -1
+    (match (Datetime.strptime "AM 2024-03-15" "%p %Y-%m-%d")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) -1)
+      (Result.Error _) -2)
+    "strptime %p with no hour specifier leaves the hour unset (AM)")
+  (assert-equal test
+    15
+    (match (Datetime.strptime "03 PM 2024-03-15" "%I %p %Y-%m-%d")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) -1)
+      (Result.Error _) -2)
+    "strptime %I %p parses 03 PM as 15")
+  (assert-equal test
+    7
+    (match (Datetime.strptime "07 2024-03-15" "%H %Y-%m-%d")
+      (Result.Success dt) (Maybe.from @(Datetime.hours &dt) -1)
+      (Result.Error _) -2)
+    "strptime %H parses the hour with no am/pm marker")
+
+  (assert-equal test
     123456789
     (match (Datetime.strptime "14:30:00.123456789" "%H:%M:%S.%n")
       (Result.Success dt) (Maybe.from @(Datetime.nanoseconds &dt) 0)
