@@ -604,7 +604,7 @@ Example:
           (strftime dt "%I:%M:%S %p")
           \h
           (month-short-string dt)
-          (str c)))
+          (String.from-bytes &[(Byte.from-int (Char.to-int c))])))
 
   (doc format "The interface implementation of `format` for `Datetime` values.
 

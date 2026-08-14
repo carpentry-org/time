@@ -1036,6 +1036,14 @@
     &(Datetime.strftime &(Datetime.date 2024 3 15) "%Q")
     "strftime renders an unknown specifier as the character itself")
   (assert-equal test
+    &[195b 164b]
+    &(String.to-bytes &(Datetime.strftime &(Datetime.date 2024 3 15) "%ä"))
+    "strftime renders an unknown non-ASCII specifier as that character")
+  (assert-equal test
+    &[226b 130b 172b 120b]
+    &(String.to-bytes &(Datetime.strftime &(Datetime.date 2024 3 15) "%€x"))
+    "strftime reassembles a multi-byte unknown specifier before a literal")
+  (assert-equal test
     &@"2024%"
     &(Datetime.strftime &(Datetime.date 2024 3 15) "%Y%")
     "strftime renders a trailing lone percent as a literal percent")
