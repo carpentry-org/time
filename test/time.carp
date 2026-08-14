@@ -17,6 +17,9 @@
 ; render a Datetime as "YYYY-MM-DD HH:MM:SS" for whole-instant comparisons.
 (defn stamp [dt] (fmt "%s %s" &(Datetime.isoformat dt) &(Datetime.isotime dt)))
 
+; n UTF-8 continuation bytes, which decode to no character at all.
+(defn conts [n] (String.from-bytes &(Array.replicate n &128b)))
+
 ; sweep range: two leap years, two 53-week ISO years (2020 and 2026)
 (def SWEEP-FROM (Datetime.to-ordinal &(Datetime.date 2018 1 1)))
 (def SWEEP-TO (Datetime.to-ordinal &(Datetime.date 2026 12 31)))
@@ -1360,6 +1363,69 @@
   (assert-true test
     (Result.error? &(Datetime.strptime "2024-7" "%Y-%w"))
     "strptime rejects %w outside 0-6")
+
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 6) "%d %b %Y"))
+    "strptime rejects continuation bytes for a numeric field")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 20) "%Y-%m-%dT%H:%M:%S%z"))
+    "strptime rejects continuation bytes across every numeric field")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 4) "%B"))
+    "strptime rejects continuation bytes for %B")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 3) "%b"))
+    "strptime rejects continuation bytes for %b")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 2) "%p"))
+    "strptime rejects continuation bytes for %p")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 3) "%c"))
+    "strptime rejects continuation bytes for a compound specifier")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(conts 6) "%j"))
+    "strptime rejects continuation bytes for a ranged field")
+  (assert-true test
+    (Result.error? &(Datetime.strptime &(String.from-bytes &[226b 130b]) "%m"))
+    "strptime rejects input truncated mid-character")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "Jané" "%B"))
+    "strptime rejects a month name running into a multibyte character")
+
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "«2024-03-15»" "«%Y-%m-%d»")
+    "strptime matches multibyte literals in the format")
+  (assert-equal test
+    &(Result.Success
+      (Datetime.init 0
+                     0
+                     0
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)
+                     (Maybe.Just (Timezone.init @"UTC" 0l false))))
+    &(Datetime.strptime "é UTC" "é %Z")
+    "strptime reads %Z after a multibyte literal")
+  (assert-equal test
+    &(Result.Success
+      (Datetime.init 0
+                     0
+                     0
+                     (Maybe.Just 14)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)
+                     (Maybe.Nothing)))
+    &(Datetime.strptime "é02PM" "é%I%p")
+    "strptime reads %p after a multibyte literal")
+  (assert-equal test
+    &(Result.Error
+      (String.concat
+        &[@"unknown format specifier: %" (String.from-bytes &[195b])]))
+    &(Datetime.strptime "" "%é")
+    "strptime reports an unknown specifier byte without re-encoding it")
 
   (assert-equal test
     &@""

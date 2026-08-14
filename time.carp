@@ -604,9 +604,7 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
   (hidden parse-digits)
   (defn parse-digits [s pos n]
     (if (<= (+ pos n) (String.length s))
-      (let [sub (String.suffix s pos)
-            tok (String.prefix &sub n)]
-        (Int.from-string &tok))
+      (Int.from-string &(String.byte-slice s pos (+ pos n)))
       (Maybe.Nothing)))
 
   (private parse-ranged)
@@ -622,13 +620,12 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
   (defn match-in-array [arr s pos]
     (let-do [result -1
              i 1
-             slen (String.length s)
-             sub (String.suffix s pos)]
+             slen (String.length s)]
       (while (and (= result -1) (< i (Array.length arr)))
         (let [candidate (Array.unsafe-nth arr i)
               clen (String.length candidate)]
           (if (and (<= (+ pos clen) slen)
-                   (= &(String.prefix &sub clen) candidate))
+                   (= &(String.byte-slice s pos (+ pos clen)) candidate))
             (set! result i)
             (set! i (+ i 1)))))
       result))
@@ -640,12 +637,11 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
       -1
       (let-do [result -1
                i 1
-               sub (String.suffix s pos)
-               tok (String.prefix &sub 3)]
+               tok (String.byte-slice s pos (+ pos 3))]
         (while (and (= result -1) (< i (Array.length arr)))
           (let [candidate (Array.unsafe-nth arr i)]
             (if (and (>= (String.length candidate) 3)
-                     (= &tok &(String.prefix candidate 3)))
+                     (= &tok &(String.byte-slice candidate 0 3)))
               (set! result i)
               (set! i (+ i 1)))))
         result)))
@@ -699,9 +695,14 @@ It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
                       (set! result (String.concat &[result @"%b"]))
                       (set! i (+ i 2)))
                     (do
-                      (set! result (String.concat &[result (str c) (str spec)]))
+                      (set! result
+                            (String.concat
+                              &[result (String.byte-slice fmt i (+ i 2))]))
                       (set! i (+ i 2)))))
-            (do (set! result (String.concat &[result (str c)])) (set! i (+ i 1))))))
+            (do
+              (set! result
+                    (String.concat &[result (String.byte-slice fmt i (+ i 1))]))
+              (set! i (+ i 1))))))
       result))
 
   (doc strptime "parses a string `input` according to format string `fmt`,
@@ -851,8 +852,7 @@ Example:
                       \p
                       (if (> (+ ipos 2) ilen)
                         (do (set! err @"failed to parse %p") (set! ok false))
-                        (let [sub (String.suffix input ipos)
-                              tok (String.prefix &sub 2)]
+                        (let [tok (String.byte-slice input ipos (+ ipos 2))]
                           (cond
                             (= &tok "AM")
                               (do
@@ -1045,9 +1045,9 @@ Example:
                                           (and (>= c \a) (<= c \z)))))
                           (set! n (+ n 1)))
                         (if (> n 0)
-                          (let-do [sub (String.suffix input ipos)
-                                   nm (String.prefix &sub n)]
-                            (set! tz-nm nm)
+                          (do
+                            (set! tz-nm
+                                  (String.byte-slice input ipos (+ ipos n)))
                             (set! has-tz true)
                             (set! ipos (+ ipos n))
                             (set! fpos (+ fpos 2)))
@@ -1059,7 +1059,8 @@ Example:
                       (do
                         (set! err
                               (String.concat
-                                &[@"unknown format specifier: %" (str spec)]))
+                                &[@"unknown format specifier: %"
+                                  (String.byte-slice &efmt (+ fpos 1) (+ fpos 2))]))
                         (set! ok false))))
             (and (< ipos ilen) (= fc (String.char-at input ipos)))
               (do (set! ipos (+ ipos 1)) (set! fpos (+ fpos 1)))
