@@ -459,6 +459,15 @@ The ISO format is of the form `HH:MM:SS`. The date value is not represented.")
          (Maybe.from @(minutes dt) 0)
          (Maybe.from @(seconds dt) 0)))
 
+  (doc subsecond-nanos "returns the sub-second part of the nanosecond count `t`,
+that is, `t` modulo one billion.
+
+The reduction is exact over the whole `Uint64` range, including counts wider
+than a C `long`.")
+  (defn subsecond-nanos [t]
+    (let [billion (Uint64.from-long 1000000000l)]
+      (Long.to-int (Uint64.to-long (- t (* (/ t billion) billion))))))
+
   (doc now "returns the `Datetime` representing the current time.
 
 All of the time information is obtained from the operating system directly.")
@@ -471,7 +480,7 @@ All of the time information is obtained from the operating system directly.")
             (Maybe.Just @(TM.tm_hour ct))
             (Maybe.Just @(TM.tm_min ct))
             (Maybe.Just @(TM.tm_sec ct))
-            (Maybe.Just (Long.to-int (mod (Uint64.to-long t) 1000000000l)))
+            (Maybe.Just (subsecond-nanos t))
             (Maybe.Just
               (Timezone.init @(TM.tm_zone ct)
                              @(TM.tm_gmtoff ct)

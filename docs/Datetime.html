@@ -1201,6 +1201,29 @@ weekday on its own carries no date and is ignored.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#subsecond-nanos">
+                        <h3 id="subsecond-nanos">
+                            subsecond-nanos
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Uint64] Int)
+                    </p>
+                    <pre class="args">
+                        (subsecond-nanos t)
+                    </pre>
+                    <p class="doc">
+                        <p>returns the sub-second part of the nanosecond count <code>t</code>,
+that is, <code>t</code> modulo one billion.</p>
+<p>The reduction is exact over the whole <code>Uint64</code> range, including counts wider
+than a C <code>long</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#to-ordinal">
                         <h3 id="to-ordinal">
                             to-ordinal
