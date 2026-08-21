@@ -17,6 +17,11 @@
 ; render a Datetime as "YYYY-MM-DD HH:MM:SS" for whole-instant comparisons.
 (defn stamp [dt] (fmt "%s %s" &(Datetime.isoformat dt) &(Datetime.isotime dt)))
 
+; parts stay under 2^31: a wider Long literal truncates where C long is 32 bits.
+(defn nanos [secs ns]
+  (let [billion (Uint64.from-long 1000000000l)]
+    (+ (* (Uint64.from-long secs) billion) (Uint64.from-long ns))))
+
 ; n UTF-8 continuation bytes, which decode to no character at all.
 (defn conts [n] (String.from-bytes &(Array.replicate n &128b)))
 
@@ -668,6 +673,47 @@
       &(at-tz 2100 1 1 14 0 0 (Timezone.init @"EST" -18000l false))
       &(at-tz 2100 1 1 19 0 0 @&Timezone.utc))
     "equal-instant? stays timezone-aware past 2038")
+
+  ; --- sub-second reduction of a 64-bit clock ---
+  (assert-equal test
+    999999999
+    (Datetime.subsecond-nanos (Uint64.from-long 999999999l))
+    "subsecond-nanos leaves a count below one second alone")
+  (assert-equal test
+    500000000
+    (Datetime.subsecond-nanos (nanos 1l 500000000l))
+    "subsecond-nanos drops whole seconds")
+  (assert-equal test
+    294967296
+    (Datetime.subsecond-nanos
+      (Uint64.bit-shift-left (Uint64.from-long 1l) (Uint64.from-long 32l)))
+    "subsecond-nanos reduces 2^32")
+  (assert-equal test
+    662882507
+    (Datetime.subsecond-nanos (nanos 1787138980l 662882507l))
+    "subsecond-nanos reduces a realistic monotonic-clock reading")
+  (assert-equal test
+    854775808
+    (Datetime.subsecond-nanos
+      (Uint64.bit-shift-left (Uint64.from-long 1l) (Uint64.from-long 63l)))
+    "subsecond-nanos reduces 2^63")
+  (assert-equal test
+    709551615
+    (Datetime.subsecond-nanos Uint64.MAX)
+    "subsecond-nanos reduces the largest representable count")
+
+  ; with no second boundary between the samples, now's nanos sit between them.
+  (let-do [billion (Uint64.from-long 1000000000l)
+           a (System.nanotime)
+           dt (Datetime.now)
+           b (System.nanotime)
+           lo (Datetime.subsecond-nanos a)
+           hi (Datetime.subsecond-nanos b)
+           ns (Maybe.from @(Datetime.nanoseconds &dt) -1)
+           spans-a-second? (or (> (- b a) billion) (> lo hi))]
+    (assert-true test
+      (or spans-a-second? (and (<= lo ns) (<= ns hi)))
+      "now reads its nanoseconds off the full-width clock"))
 
   (assert-equal test
     &@"00:00:30"
