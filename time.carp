@@ -382,15 +382,18 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
           mm (Maybe.from @(minutes dt) 0)
           ss (Maybe.from @(seconds dt) 0)]
       (-
-        (+ (* days DAY) (+ (* hh HOUR) (+ (* mm MINUTE) ss)))
-        (Long.to-int @(Timezone.delta &tz)))))
+        (+
+          (* (Long.from-int days) (Long.from-int DAY))
+          (Long.from-int (+ (* hh HOUR) (+ (* mm MINUTE) ss))))
+        @(Timezone.delta &tz))))
 
   (doc from-unix-timestamp "returns the `Datetime` equivalent to the UNIX
 timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
 1970.")
   (defn from-unix-timestamp [ts]
-    (let-do [days (/ ts DAY)
-             secs (- ts (* days DAY))]
+    (let-do [day-secs (Long.from-int DAY)
+             days (Long.to-int (/ ts day-secs))
+             secs (Long.to-int (- ts (* (Long.from-int days) day-secs)))]
       ; / and mod truncate toward zero, so a negative ts can leave secs
       ; negative; borrow a day so the time-of-day stays in 0..86399
       (when-do (< secs 0) (set! days (Int.dec days)) (set! secs (+ secs DAY)))
