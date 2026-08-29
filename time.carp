@@ -1236,7 +1236,9 @@ earlier. This is a timezone-unaware comparison, similar to `>` and `<`.")
           time-b (+ (* (Maybe.from @(hours b) 0) HOUR)
                     (+ (* (Maybe.from @(minutes b) 0) MINUTE)
                        (Maybe.from @(seconds b) 0)))]
-      (+ (* (- ord-a ord-b) DAY) (- time-a time-b))))
+      (+
+        (* (Long.from-int (- ord-a ord-b)) (Long.from-int DAY))
+        (Long.from-int (- time-a time-b)))))
 
   (doc add-months "adds `n` months to the `Datetime` `dt`.
 
@@ -1279,7 +1281,7 @@ clamped to February 28.
             @(nanoseconds dt)
             @(tz dt)))))
 
-(deftype Duration [seconds- Int])
+(deftype Duration [seconds- Long])
 
 (doc Duration "this is a complementary module to be used with `Datetime` and
 is concerned with adding and subtracting time values of the scale from seconds
@@ -1311,21 +1313,36 @@ Example:
   (private init)
 
   (doc seconds "creates a delta representing a number of seconds `n`.")
-  (defn seconds [n] (init n))
+  (defn seconds [n] (init (Long.from-int n)))
   (doc minutes "creates a delta representing a number of minutes `n`.")
-  (defn minutes [n] (seconds (* n 60)))
+  (defn minutes [n] (init (* (Long.from-int n) 60l)))
   (doc hours "creates a delta representing a number of hours `n`.")
-  (defn hours [n] (minutes (* n 60)))
+  (defn hours [n] (init (* (Long.from-int n) 3600l)))
   (doc days "creates a delta representing a number of days `n`.")
-  (defn days [n] (hours (* n 24)))
+  (defn days [n] (init (* (Long.from-int n) 86400l)))
   (doc weeks "creates a delta representing a number of weeks `n`.")
-  (defn weeks [n] (days (* n 7)))
+  (defn weeks [n] (init (* (Long.from-int n) 604800l)))
+
+  (private shift)
+  (hidden shift)
+  ; a Datetime names its date by an Int ordinal, so clamp rather than wrap
+  (defn shift [dt total]
+    (let-do [nd @dt
+             ord (Long.clamp (Long.from-int Int.MIN)
+                             (Long.from-int Int.MAX)
+                             (+ (Long.from-int (Datetime.to-ordinal dt))
+                                (/ total 86400l)))
+             d (Datetime.from-ordinal (Long.to-int ord))]
+      (Datetime.set-day! &nd @(Datetime.day &d))
+      (Datetime.set-month! &nd @(Datetime.month &d))
+      (Datetime.set-year! &nd @(Datetime.year &d))
+      (Datetime.add-seconds &nd (Long.to-int (mod total 86400l)))))
 
   (doc add "adds a `Duration` `delta` to a `Datetime` `dt`.")
-  (defn add [dt delta] (Datetime.add-seconds dt @(seconds- delta)))
+  (defn add [dt delta] (shift dt @(seconds- delta)))
 
   (doc sub "subtracts a `Duration` `delta` from a `Datetime` `dt`.")
-  (defn sub [dt delta] (Datetime.add-seconds dt (neg @(seconds- delta))))
+  (defn sub [dt delta] (shift dt (neg @(seconds- delta))))
 
   (doc between
     "returns the signed difference between the `Datetime`s `a` and `b`
@@ -1341,16 +1358,16 @@ earlier, mirroring `Datetime.diff`.")
 
   (doc to-minutes "returns the total number of whole minutes represented by the
 delta `d`, truncating any remaining seconds toward zero.")
-  (defn to-minutes [d] (/ @(seconds- d) 60))
+  (defn to-minutes [d] (/ @(seconds- d) 60l))
 
   (doc to-hours
     "returns the total number of whole hours represented by the delta
 `d`, truncating any remainder toward zero.")
-  (defn to-hours [d] (/ @(seconds- d) 3600))
+  (defn to-hours [d] (/ @(seconds- d) 3600l))
 
   (doc to-days "returns the total number of whole days represented by the delta
 `d`, truncating any remainder toward zero.")
-  (defn to-days [d] (/ @(seconds- d) 86400))
+  (defn to-days [d] (/ @(seconds- d) 86400l))
 
   (doc plus "returns the sum of the deltas `a` and `b`.")
   (defn plus [a b] (init (+ @(seconds- a) @(seconds- b))))
@@ -1362,32 +1379,32 @@ delta `d`, truncating any remaining seconds toward zero.")
   (defn negate [d] (init (neg @(seconds- d))))
 
   (doc scale "returns the delta `d` scaled by the integer factor `n`.")
-  (defn scale [d n] (init (* @(seconds- d) n)))
+  (defn scale [d n] (init (* @(seconds- d) (Long.from-int n))))
 
   (doc mul "returns the delta `d` scaled by the integer factor `n`. An alias for
 `scale`.")
   (defn mul [d n] (scale d n))
 
   (doc = "checks whether the deltas `a` and `b` represent the same duration.")
-  (defn = [a b] (Int.= @(seconds- a) @(seconds- b)))
+  (defn = [a b] (Long.= @(seconds- a) @(seconds- b)))
   (implements = Duration.=)
 
   (doc < "checks whether the delta `a` is shorter than the delta `b`.")
-  (defn < [a b] (Int.< @(seconds- a) @(seconds- b)))
+  (defn < [a b] (Long.< @(seconds- a) @(seconds- b)))
   (implements < Duration.<)
 
   (doc > "checks whether the delta `a` is longer than the delta `b`.")
-  (defn > [a b] (Int.> @(seconds- a) @(seconds- b)))
+  (defn > [a b] (Long.> @(seconds- a) @(seconds- b)))
   (implements > Duration.>)
 
   (doc zero? "checks whether the delta `d` represents no elapsed time.")
-  (defn zero? [d] (Int.= @(seconds- d) 0))
+  (defn zero? [d] (Long.= @(seconds- d) 0l))
 
   (doc pos? "checks whether the delta `d` represents a positive duration.")
-  (defn pos? [d] (Int.> @(seconds- d) 0))
+  (defn pos? [d] (Long.> @(seconds- d) 0l))
 
   (doc neg? "checks whether the delta `d` represents a negative duration.")
-  (defn neg? [d] (Int.< @(seconds- d) 0))
+  (defn neg? [d] (Long.< @(seconds- d) 0l))
 
   (doc str
     "renders the delta `d` in a human-readable form such as `1d 2h 3m 4s`.
@@ -1396,18 +1413,19 @@ Components that are zero are omitted, a negative delta is prefixed with a `-`,
 and the zero delta renders as `0s`.")
   (defn str [d]
     (let [total @(seconds- d)]
-      (if (Int.= total 0)
+      (if (Long.= total 0l)
         @"0s"
-        (let-do [a (Int.abs total)
-                 days (/ a 86400)
-                 hrs (/ (mod a 86400) 3600)
-                 mins (/ (mod a 3600) 60)
-                 secs (mod a 60)
+        (let-do [a (Long.abs total)
+                 days (/ a 86400l)
+                 hrs (Long.to-int (/ (mod a 86400l) 3600l))
+                 mins (Long.to-int (/ (mod a 3600l) 60l))
+                 secs (Long.to-int (mod a 60l))
                  parts []]
-          (when (> days 0) (Array.push-back! &parts (fmt "%dd" days)))
+          (when (> days 0l)
+            (Array.push-back! &parts (fmt "%sd" &(Long.str days))))
           (when (> hrs 0) (Array.push-back! &parts (fmt "%dh" hrs)))
           (when (> mins 0) (Array.push-back! &parts (fmt "%dm" mins)))
           (when (> secs 0) (Array.push-back! &parts (fmt "%ds" secs)))
           (String.concat
-            &[(if (Int.< total 0) @"-" @"") (String.join " " &parts)])))))
+            &[(if (Long.< total 0l) @"-" @"") (String.join " " &parts)])))))
   (implements str Duration.str))
