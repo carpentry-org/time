@@ -131,6 +131,9 @@ to weeks from <code>Datetime</code> values.</p>
                     </pre>
                     <p class="doc">
                         <p>adds a <code>Duration</code> <code>delta</code> to a <code>Datetime</code> <code>dt</code>.</p>
+<p>A <code>Duration</code> can name a span far wider than the range of dates a <code>Datetime</code> can
+represent. A result that would fall outside that range saturates at the first
+or last representable date rather than wrapping.</p>
 
                     </p>
                 </div>
@@ -214,6 +217,29 @@ earlier, mirroring <code>Datetime.diff</code>.</p>
                     </span>
                     <p class="doc">
                         <p>deletes a <code>Duration</code>. Should usually not be called manually.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#from-seconds">
+                        <h3 id="from-seconds">
+                            from-seconds
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [Long] Duration)
+                    </p>
+                    <pre class="args">
+                        (from-seconds n)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a delta from a raw second count <code>n</code>.</p>
+<p>The unit constructors above take an <code>Int</code> count, which cannot name a delta
+longer than about 68 years in seconds. This is the counterpart to
+<a href="#to-seconds"><code>to-seconds</code></a>, so a delta of any width round-trips through it.</p>
 
                     </p>
                 </div>
@@ -477,6 +503,7 @@ and the zero delta renders as <code>0s</code>.</p>
                     </pre>
                     <p class="doc">
                         <p>subtracts a <code>Duration</code> <code>delta</code> from a <code>Datetime</code> <code>dt</code>.</p>
+<p>Out-of-range results saturate, as in <a href="#add"><code>add</code></a>.</p>
 
                     </p>
                 </div>
@@ -490,7 +517,7 @@ and the zero delta renders as <code>0s</code>.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [(Ref Duration a)] Int)
+                        (Fn [(Ref Duration a)] Long)
                     </p>
                     <pre class="args">
                         (to-days d)
@@ -511,7 +538,7 @@ and the zero delta renders as <code>0s</code>.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [(Ref Duration a)] Int)
+                        (Fn [(Ref Duration a)] Long)
                     </p>
                     <pre class="args">
                         (to-hours d)
@@ -532,7 +559,7 @@ and the zero delta renders as <code>0s</code>.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [(Ref Duration a)] Int)
+                        (Fn [(Ref Duration a)] Long)
                     </p>
                     <pre class="args">
                         (to-minutes d)
@@ -553,7 +580,7 @@ delta <code>d</code>, truncating any remaining seconds toward zero.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [(Ref Duration a)] Int)
+                        (Fn [(Ref Duration a)] Long)
                     </p>
                     <pre class="args">
                         (to-seconds d)
