@@ -2114,4 +2114,39 @@
                         (Maybe.Nothing))
         &(Duration.plus &(Duration.days 36525) &(Duration.hours 1)))
       "%Y-%m-%d %H:%M:%S")
-    "add: a century-long delta keeps the time of day"))
+    "add: a century-long delta keeps the time of day")
+
+  (assert-equal test
+    &@"0001-01-01"
+    &(Datetime.isoformat
+      &(Duration.sub &(Datetime.date 2024 1 1) &(Duration.days 739000)))
+    "sub: a delta reaching before the first ordinal saturates")
+  (assert-equal test
+    &@"5879611-07-11"
+    &(Datetime.isoformat
+      &(Duration.add &(Datetime.date 2024 1 1) &(Duration.days 2147483647)))
+    "add: a delta past the last ordinal saturates")
+  (assert-equal test
+    &@"5879611-07-11"
+    &(Datetime.isoformat
+      &(Duration.add
+        &(Datetime.init 2024
+                        1
+                        1
+                        (Maybe.Just 23)
+                        (Maybe.Just 0)
+                        (Maybe.Just 0)
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))
+        &(Duration.plus &(Duration.days 2147483647) &(Duration.hours 23))))
+    "add: saturation leaves room for the time-of-day carry")
+
+  (assert-equal test
+    (* 36525l 86400l)
+    (Duration.to-seconds &(Duration.from-seconds (* 36525l 86400l)))
+    "from-seconds: holds a count wider than an Int")
+  (assert-true test
+    (Duration.=
+      &(Duration.from-seconds (Duration.to-seconds &(Duration.days 36525)))
+      &(Duration.days 36525))
+    "from-seconds: round-trips to-seconds"))

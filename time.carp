@@ -1323,25 +1323,42 @@ Example:
   (doc weeks "creates a delta representing a number of weeks `n`.")
   (defn weeks [n] (init (* (Long.from-int n) 604800l)))
 
+  (doc from-seconds "creates a delta from a raw second count `n`.
+
+The unit constructors above take an `Int` count, which cannot name a delta
+longer than about 68 years in seconds. This is the counterpart to
+[`to-seconds`](#to-seconds), so a delta of any width round-trips through it.")
+  (defn from-seconds [n] (init n))
+
   (private shift)
   (hidden shift)
-  ; a Datetime names its date by an Int ordinal, so clamp rather than wrap
+  ; A Datetime names its date by an Int ordinal, and from-ordinal is only
+  ; defined from 1 up, so saturate at both ends rather than wrap out of the
+  ; representable range. The time-of-day remainder is applied first so that its
+  ; own day carry happens before the clamp and cannot push back out of range.
   (defn shift [dt total]
-    (let-do [nd @dt
-             ord (Long.clamp (Long.from-int Int.MIN)
+    (let-do [nd (Datetime.add-seconds dt (Long.to-int (mod total 86400l)))
+             ord (Long.clamp 1l
                              (Long.from-int Int.MAX)
-                             (+ (Long.from-int (Datetime.to-ordinal dt))
-                                (/ total 86400l)))
+                             (+
+                               (Long.from-int (Datetime.to-ordinal &nd))
+                               (/ total 86400l)))
              d (Datetime.from-ordinal (Long.to-int ord))]
       (Datetime.set-day! &nd @(Datetime.day &d))
       (Datetime.set-month! &nd @(Datetime.month &d))
       (Datetime.set-year! &nd @(Datetime.year &d))
-      (Datetime.add-seconds &nd (Long.to-int (mod total 86400l)))))
+      nd))
 
-  (doc add "adds a `Duration` `delta` to a `Datetime` `dt`.")
+  (doc add "adds a `Duration` `delta` to a `Datetime` `dt`.
+
+A `Duration` can name a span far wider than the range of dates a `Datetime` can
+represent. A result that would fall outside that range saturates at the first
+or last representable date rather than wrapping.")
   (defn add [dt delta] (shift dt @(seconds- delta)))
 
-  (doc sub "subtracts a `Duration` `delta` from a `Datetime` `dt`.")
+  (doc sub "subtracts a `Duration` `delta` from a `Datetime` `dt`.
+
+Out-of-range results saturate, as in [`add`](#add).")
   (defn sub [dt delta] (shift dt (neg @(seconds- delta))))
 
   (doc between
