@@ -1156,16 +1156,16 @@
     "strftime copies non-ASCII literals verbatim")
   (assert-equal test
     &@"Größe: 2024"
-    &(Datetime.format "Größe: %Y" &(Datetime.date 2024 3 15))
-    "format slices non-ASCII literals by byte")
+    &(Datetime.unsafe-format "Größe: %Y" &(Datetime.date 2024 3 15))
+    "unsafe-format slices non-ASCII literals by byte")
   (assert-equal test
     &@"Größe: 2024"
     &(fmt "Größe: %Y" &(Datetime.date 2024 3 15))
-    "fmt reaches format with a non-ASCII literal")
+    "fmt reaches unsafe-format with a non-ASCII literal")
   (assert-equal test
     &@"hello"
-    &(Datetime.format "hello" &(Datetime.date 2024 3 15))
-    "format passes through a slice with no directive")
+    &(Datetime.unsafe-format "hello" &(Datetime.date 2024 3 15))
+    "unsafe-format passes through a slice with no directive")
 
   (assert-equal test
     &(Result.Success (Datetime.date 2024 3 15))
