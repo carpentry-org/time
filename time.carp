@@ -48,7 +48,7 @@ formatted using `strftime`, and parsed using `strptime`. Both mimic
 Formatting example:
 
 ```
-(load \"git@github.com:carpentry-org/time@0.6.0\")
+(load \"git@github.com:carpentry-org/time@0.7.0\")
 
 (defn main []
   (println* &(Datetime.strftime &(Datetime.now) \"%Y-%m-%d %I:%M:%S.%n %p %z\")))
@@ -57,7 +57,7 @@ Formatting example:
 Parsing example:
 
 ```
-(load \"git@github.com:carpentry-org/time@0.6.0\")
+(load \"git@github.com:carpentry-org/time@0.7.0\")
 
 (defn main []
   (match (Datetime.strptime \"2024-03-15 14:30:00\" \"%Y-%m-%d %H:%M:%S\")
@@ -1299,7 +1299,7 @@ to weeks from `Datetime` values.
 
 Example:
 ```
-(load \"git@github.com:carpentry-org/time@0.6.0\")
+(load \"git@github.com:carpentry-org/time@0.7.0\")
 
 (defn main []
   (println*
