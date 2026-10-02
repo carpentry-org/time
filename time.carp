@@ -489,8 +489,8 @@ All of the time information is obtained from the operating system directly.")
                              @(TM.tm_gmtoff ct)
                              (/= 0 @(TM.tm_isdst ct)))))))
 
-  (register format (Fn [(Ref String) (Ref Datetime)] String))
-  (implements format Datetime.format)
+  (register unsafe-format (Fn [(Ref String) (Ref Datetime)] String))
+  (implements unsafe-format Datetime.unsafe-format)
 
   (register format-for (Fn [Char (Ref Datetime)] String))
 
@@ -501,9 +501,9 @@ Text outside a directive is copied verbatim. `%%` renders a single `%`, as does
 a trailing `%` with nothing after it; an unrecognized specifier renders as the
 character that follows the `%`.
 
-You can alternatively use the `fmt` macro or `format` function, but you’ll only
-be able to use one of the formatting properties there. Thus this function is
-provided as a convenience for fine-grained string tweaking.
+You can alternatively use the `fmt` macro or `unsafe-format` function, but
+you’ll only be able to use one of the formatting properties there. Thus this
+function is provided as a convenience for fine-grained string tweaking.
 
 Example:
 
@@ -546,30 +546,30 @@ Example:
           \w
           (str (weekday dt))
           \d
-          (format "%02d" @(day dt))
+          (unsafe-format "%02d" @(day dt))
           \b
           (month-short-string dt)
           \B
           (month-string dt)
           \m
-          (format "%02d" @(month dt))
+          (unsafe-format "%02d" @(month dt))
           \y
-          (format "%02d" (mod @(year dt) 100))
+          (unsafe-format "%02d" (mod @(year dt) 100))
           \Y
-          (format "%04d" @(year dt))
+          (unsafe-format "%04d" @(year dt))
           \H
-          (format "%02d" (Maybe.from @(hours dt) 0))
+          (unsafe-format "%02d" (Maybe.from @(hours dt) 0))
           \I
           (let [h (mod (Maybe.from @(hours dt) 0) 12)]
-            (format "%02d" (if (= h 0) 12 h)))
+            (unsafe-format "%02d" (if (= h 0) 12 h)))
           \p
           (if (> (Maybe.from @(hours dt) 0) 11) @"PM" @"AM")
           \M
-          (format "%02d" (Maybe.from @(minutes dt) 0))
+          (unsafe-format "%02d" (Maybe.from @(minutes dt) 0))
           \S
-          (format "%02d" (Maybe.from @(seconds dt) 0))
+          (unsafe-format "%02d" (Maybe.from @(seconds dt) 0))
           \n
-          (format "%09d" (Maybe.from @(nanoseconds dt) 0))
+          (unsafe-format "%09d" (Maybe.from @(nanoseconds dt) 0))
           \z
           (match @(tz dt)
             (Maybe.Just t)
@@ -583,15 +583,16 @@ Example:
           \Z
           @(Timezone.name &(Maybe.from @(tz dt) (Timezone.zero)))
           \j
-          (format "%03d" (yearday dt))
+          (unsafe-format "%03d" (yearday dt))
           \U
           ; week of the year, Sunday as the first day; days before the first
           ; Sunday are week 0. weekday is Monday-based, so shift to Sunday-based.
-          (format "%02d" (/ (+ (- (yearday dt) (mod (+ (weekday dt) 1) 7)) 6) 7))
+          (unsafe-format "%02d"
+                         (/ (+ (- (yearday dt) (mod (+ (weekday dt) 1) 7)) 6) 7))
           \W
           ; week of the year, Monday as the first day; days before the first
           ; Monday are week 0. weekday is already Monday-based.
-          (format "%02d" (/ (+ (- (yearday dt) (weekday dt)) 6) 7))
+          (unsafe-format "%02d" (/ (+ (- (yearday dt) (weekday dt)) 6) 7))
           \c
           (strftime dt "%a %b %d %H:%M:%S %Y")
           \x
@@ -601,9 +602,11 @@ Example:
           \u
           (str (isoweekday dt))
           \V
-          (let [ic (isocalendar dt)] (format "%02d" @(Array.unsafe-nth &ic 1)))
+          (let [ic (isocalendar dt)]
+            (unsafe-format "%02d" @(Array.unsafe-nth &ic 1)))
           \G
-          (let [ic (isocalendar dt)] (format "%04d" @(Array.unsafe-nth &ic 0)))
+          (let [ic (isocalendar dt)]
+            (unsafe-format "%04d" @(Array.unsafe-nth &ic 0)))
           \F
           (strftime dt "%Y-%m-%d")
           \T
@@ -618,10 +621,17 @@ Example:
           (month-short-string dt)
           (String.from-bytes &[(Byte.from-int (Char.to-int c))])))
 
-  (doc format "The interface implementation of `format` for `Datetime` values.
+  (doc unsafe-format "The interface implementation of `unsafe-format` for
+`Datetime` values.
 
-It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).")
-  (defn format [s dt]
+It mimics [the C interface](http://www.cplusplus.com/reference/ctime/strftime/).
+
+Unlike the `unsafe-format` implementations that wrap C’s `printf`, this one is
+directive-safe: it expands the first directive it finds and copies the rest of
+`s` verbatim, so a string carrying more directives than arguments cannot read
+past the end of the argument list. It carries the interface’s name, not its
+hazard.")
+  (defn unsafe-format [s dt]
     (let [idx (String.index-of s \%)
           len (String.length s)]
       (if (or (< idx 0) (= idx (Int.dec len)))
