@@ -698,74 +698,71 @@ hazard.")
     (if (> (+ pos 3) (String.length s))
       -1
       (let-do [result -1
-               i 1
-               tok (String.byte-slice s pos (+ pos 3))]
+               i 1]
         (while (and (= result -1) (< i (Array.length arr)))
           (let [candidate (Array.unsafe-nth arr i)]
             (if (and (>= (String.length candidate) 3)
-                     (= &tok &(String.byte-slice candidate 0 3)))
+                     (and
+                       (= (String.char-at s pos) (String.char-at candidate 0))
+                       (and
+                         (= (String.char-at s (+ pos 1))
+                            (String.char-at candidate 1))
+                         (= (String.char-at s (+ pos 2))
+                            (String.char-at candidate 2)))))
               (set! result i)
               (set! i (+ i 1)))))
         result)))
 
+  (private compound-expansion)
+  (hidden compound-expansion)
+  ; what a compound specifier stands for, `Nothing` for any other specifier
+  (defn compound-expansion [spec]
+    (case spec
+          \c
+          (Maybe.Just @"%a %b %d %H:%M:%S %Y")
+          \x
+          (Maybe.Just @"%Y-%m-%d")
+          \X
+          (Maybe.Just @"%H:%M:%S")
+          \F
+          (Maybe.Just @"%Y-%m-%d")
+          \T
+          (Maybe.Just @"%H:%M:%S")
+          \R
+          (Maybe.Just @"%H:%M")
+          \D
+          (Maybe.Just @"%m/%d/%y")
+          \r
+          (Maybe.Just @"%I:%M:%S %p")
+          \h
+          (Maybe.Just @"%b")
+          (Maybe.Nothing)))
+
   (private expand-compound-formats)
   (hidden expand-compound-formats)
+  ; copies the runs between compound specifiers whole, and concatenates once
   (defn expand-compound-formats [fmt]
-    (let-do [result @""
+    (let-do [pieces (the (Array String) [])
+             start 0
              i 0
              len (String.length fmt)]
       (while (< i len)
-        (let [c (String.char-at fmt i)]
-          (if (and (= c \%) (< (+ i 1) len))
-            (let [spec (String.char-at fmt (+ i 1))]
-              (case spec
-                    \c
-                    (do
-                      (set! result
-                            (String.concat &[result @"%a %b %d %H:%M:%S %Y"]))
-                      (set! i (+ i 2)))
-                    \x
-                    (do
-                      (set! result (String.concat &[result @"%Y-%m-%d"]))
-                      (set! i (+ i 2)))
-                    \X
-                    (do
-                      (set! result (String.concat &[result @"%H:%M:%S"]))
-                      (set! i (+ i 2)))
-                    \F
-                    (do
-                      (set! result (String.concat &[result @"%Y-%m-%d"]))
-                      (set! i (+ i 2)))
-                    \T
-                    (do
-                      (set! result (String.concat &[result @"%H:%M:%S"]))
-                      (set! i (+ i 2)))
-                    \R
-                    (do
-                      (set! result (String.concat &[result @"%H:%M"]))
-                      (set! i (+ i 2)))
-                    \D
-                    (do
-                      (set! result (String.concat &[result @"%m/%d/%y"]))
-                      (set! i (+ i 2)))
-                    \r
-                    (do
-                      (set! result (String.concat &[result @"%I:%M:%S %p"]))
-                      (set! i (+ i 2)))
-                    \h
-                    (do
-                      (set! result (String.concat &[result @"%b"]))
-                      (set! i (+ i 2)))
-                    (do
-                      (set! result
-                            (String.concat
-                              &[result (String.byte-slice fmt i (+ i 2))]))
-                      (set! i (+ i 2)))))
-            (do
-              (set! result
-                    (String.concat &[result (String.byte-slice fmt i (+ i 1))]))
-              (set! i (+ i 1))))))
-      result))
+        (if (and (= (String.char-at fmt i) \%) (< (+ i 1) len))
+          (do
+            (match (compound-expansion (String.char-at fmt (+ i 1)))
+              (Maybe.Just e)
+                (do
+                  (Array.push-back! &pieces (String.byte-slice fmt start i))
+                  (Array.push-back! &pieces e)
+                  (set! start (+ i 2)))
+              (Maybe.Nothing) ())
+            (set! i (+ i 2)))
+          (set! i (+ i 1))))
+      (if (Array.empty? &pieces)
+        @fmt
+        (do
+          (Array.push-back! &pieces (String.byte-slice fmt start len))
+          (String.concat &pieces)))))
 
   (doc strptime "parses a string `input` according to format string `fmt`,
 returning a `(Result Datetime String)`.
