@@ -45,6 +45,11 @@ Parse a string into a `Datetime` using `strptime`:
 `strptime` returns a `(Result Datetime String)`. On failure, the error
 contains a message describing what went wrong.
 
+Parsing is strict. Numeric fields take ASCII digits only, though a two-digit
+field may be space-padded as in `Nov  6`. Every field must be in its range, the
+date must exist (`2100-02-29` is an error), and the whole input must be
+consumed. A format without a year parses into year `0`, which is a leap year.
+
 ### Format specifiers
 
 Both `strftime` and `strptime` support the same set of format specifiers,

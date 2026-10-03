@@ -643,9 +643,19 @@ hazard.")
 
   (private parse-digits)
   (hidden parse-digits)
+  ; a two-digit field may be space-padded in place of its leading zero
   (defn parse-digits [s pos n]
     (if (<= (+ pos n) (String.length s))
-      (Int.from-string &(String.byte-slice s pos (+ pos n)))
+      (let-do [v 0
+               ok true
+               i (if (and (= n 2) (= \space (String.char-at s pos))) 1 0)]
+        (while-do (and ok (< i n))
+          (let [c (String.char-at s (+ pos i))]
+            (if (Char.num? c)
+              (set! v (+ (* v 10) (- (Char.to-int c) (Char.to-int \0))))
+              (set! ok false)))
+          (set! i (Int.inc i)))
+        (if ok (Maybe.Just v) (Maybe.Nothing)))
       (Maybe.Nothing)))
 
   (private parse-ranged)
@@ -655,6 +665,17 @@ hazard.")
       (Maybe.Just v)
         (if (and (>= v lo) (<= v hi)) (Maybe.Just v) (Maybe.Nothing))
       (Maybe.Nothing) (Maybe.Nothing)))
+
+  (private parse-field)
+  (hidden parse-field)
+  (defn parse-field [s pos n lo hi spec]
+    (match (parse-digits s pos n)
+      (Maybe.Just v)
+        (if (and (>= v lo) (<= v hi))
+          (Result.Success v)
+          (Result.Error (String.concat &[@spec @" out of range: " (Int.str v)])))
+      (Maybe.Nothing)
+        (Result.Error (String.concat &[@"failed to parse " @spec]))))
 
   (private match-in-array)
   (hidden match-in-array)
@@ -763,7 +784,7 @@ The format specifiers mirror those of `strftime`:
 - `%M` — 2-digit minute (00–59)
 - `%S` — 2-digit second (00–59)
 - `%n` — 9-digit nanoseconds
-- `%z` — timezone offset (+HHMM or -HHMM)
+- `%z` — timezone offset (+HHMM or -HHMM, minutes 00–59)
 - `%Z` — timezone name (alphabetic characters)
 - `%a` — abbreviated weekday name (Mon, Tue, ...)
 - `%A` — full weekday name (Monday, Tuesday, ...)
@@ -784,10 +805,17 @@ The format specifiers mirror those of `strftime`:
 - `%r` — 12-hour clock time (expands to `%I:%M:%S %p`)
 - `%h` — abbreviated month name (alias of `%b`)
 
+Numeric fields are fixed-width and take ASCII digits only, so a sign or stray
+whitespace is an error; a two-digit field may be space-padded in place of its
+leading zero (` 6`), as in asctime dates. A value outside the range listed
+above is an error, as is input left over once the format is exhausted.
+
 An explicit calendar date wins: if the format supplies both a month (`%m`, `%b`
-or `%B`) and a day (`%d`), the date comes from those, and the week and
-day-of-year fields are only range-checked. Otherwise the date is reconstructed
-from the first complete set of
+or `%B`) and a day (`%d`), the date comes from those and must exist, so
+`2100-02-29` and `2024-04-31` are errors. Without a year the year is `0`, a leap
+year, so `02-29` parses. The week and day-of-year fields are then only
+range-checked. Otherwise the date is reconstructed from the first complete set
+of
 
 1. a year (`%Y`/`%y`) and `%j`,
 2. `%G`, `%V` and a weekday (`%u`, `%w`, `%a` or `%A`),
@@ -855,41 +883,37 @@ Example:
                         (Maybe.Nothing)
                           (do (set! err @"failed to parse %y") (set! ok false)))
                       \m
-                      (match (parse-digits input ipos 2)
-                        (Maybe.Just v)
+                      (match (parse-field input ipos 2 1 12 "%m")
+                        (Result.Success v)
                           (do
                             (set! mo v)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                        (Maybe.Nothing)
-                          (do (set! err @"failed to parse %m") (set! ok false)))
+                        (Result.Error e) (do (set! err e) (set! ok false)))
                       \d
-                      (match (parse-digits input ipos 2)
-                        (Maybe.Just v)
+                      (match (parse-field input ipos 2 1 31 "%d")
+                        (Result.Success v)
                           (do
                             (set! dy v)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                        (Maybe.Nothing)
-                          (do (set! err @"failed to parse %d") (set! ok false)))
+                        (Result.Error e) (do (set! err e) (set! ok false)))
                       \H
-                      (match (parse-digits input ipos 2)
-                        (Maybe.Just v)
+                      (match (parse-field input ipos 2 0 23 "%H")
+                        (Result.Success v)
                           (do
                             (set! hr v)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                        (Maybe.Nothing)
-                          (do (set! err @"failed to parse %H") (set! ok false)))
+                        (Result.Error e) (do (set! err e) (set! ok false)))
                       \I
-                      (match (parse-digits input ipos 2)
-                        (Maybe.Just v)
+                      (match (parse-field input ipos 2 1 12 "%I")
+                        (Result.Success v)
                           (do
                             (set! hr v)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                        (Maybe.Nothing)
-                          (do (set! err @"failed to parse %I") (set! ok false)))
+                        (Result.Error e) (do (set! err e) (set! ok false)))
                       \p
                       (if (> (+ ipos 2) ilen)
                         (do (set! err @"failed to parse %p") (set! ok false))
@@ -909,23 +933,21 @@ Example:
                               (set! err @"failed to parse %p: expected AM or PM")
                               (set! ok false)))))
                       \M
-                      (match (parse-digits input ipos 2)
-                        (Maybe.Just v)
+                      (match (parse-field input ipos 2 0 59 "%M")
+                        (Result.Success v)
                           (do
                             (set! mi v)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                        (Maybe.Nothing)
-                          (do (set! err @"failed to parse %M") (set! ok false)))
+                        (Result.Error e) (do (set! err e) (set! ok false)))
                       \S
-                      (match (parse-digits input ipos 2)
-                        (Maybe.Just v)
+                      (match (parse-field input ipos 2 0 59 "%S")
+                        (Result.Success v)
                           (do
                             (set! sc v)
                             (set! ipos (+ ipos 2))
                             (set! fpos (+ fpos 2)))
-                        (Maybe.Nothing)
-                          (do (set! err @"failed to parse %S") (set! ok false)))
+                        (Result.Error e) (do (set! err e) (set! ok false)))
                       \n
                       (match (parse-digits input ipos 9)
                         (Maybe.Just v)
@@ -1056,28 +1078,33 @@ Example:
                       (if (> (+ ipos 5) ilen)
                         (do (set! err @"failed to parse %z") (set! ok false))
                         (let [sign-c (String.char-at input ipos)]
-                          (if (or (= sign-c \+) (= sign-c \-))
-                            (match (parse-digits input (+ ipos 1) 2)
-                              (Maybe.Just zh)
-                                (match (parse-digits input (+ ipos 3) 2)
-                                  (Maybe.Just zm)
-                                    (let-do [sign-mult (if (= sign-c \-) -1l 1l)]
-                                      (set! tz-delta
-                                            (* sign-mult
-                                               (+ (* (Long.from-int zh) 3600l)
-                                                  (* (Long.from-int zm) 60l))))
-                                      (set! has-tz true)
-                                      (set! ipos (+ ipos 5))
-                                      (set! fpos (+ fpos 2)))
-                                  (Maybe.Nothing)
-                                    (do
-                                      (set! err @"failed to parse %z")
-                                      (set! ok false)))
-                              (Maybe.Nothing)
+                          (match (if (or (= sign-c \+) (= sign-c \-))
+                              (parse-digits input (+ ipos 1) 4)
+                              (Maybe.Nothing))
+                            (Maybe.Just hhmm)
+                              (if (> (mod hhmm 100) 59)
                                 (do
-                                  (set! err @"failed to parse %z")
-                                  (set! ok false)))
-                            (do (set! err @"failed to parse %z") (set! ok false)))))
+                                  (set! err
+                                        (String.concat
+                                          &[@"%z out of range: "
+                                            (String.byte-slice input
+                                                               ipos
+                                                               (+ ipos 5))]))
+                                  (set! ok false))
+                                (let-do [sign-mult (if (= sign-c \-) -1l 1l)]
+                                  (set! tz-delta
+                                        (* sign-mult
+                                           (+ (* (Long.from-int (/ hhmm 100))
+                                                 3600l)
+                                              (* (Long.from-int (mod hhmm 100))
+                                                 60l))))
+                                  (set! has-tz true)
+                                  (set! ipos (+ ipos 5))
+                                  (set! fpos (+ fpos 2))))
+                            (Maybe.Nothing)
+                              (do
+                                (set! err @"failed to parse %z")
+                                (set! ok false)))))
                       \Z
                       (let-do [n 0]
                         (while (and (< (+ ipos n) ilen)
@@ -1110,9 +1137,26 @@ Example:
                     (String.concat
                       &[@"unexpected character at position " (Int.str ipos)]))
               (set! ok false)))))
+      (when-do (and ok (< ipos ilen))
+        (set! err
+              (String.concat
+                &[@"unexpected trailing input at position "
+                  (Int.str ipos)
+                  @": \""
+                  (String.byte-slice input ipos ilen)
+                  @"\""]))
+        (set! ok false))
       (if ok
         (match (cond
-            (and (> mo 0) (> dy 0)) (Result.Success (date yr mo dy))
+            (and (> mo 0) (> dy 0))
+              (if (> dy (days-in-month yr mo))
+                (Result.Error
+                  (String.concat
+                    &[@"%d out of range for "
+                      (fmt "%04d-%02d" yr mo)
+                      @": "
+                      (Int.str dy)]))
+                (Result.Success (date yr mo dy)))
             (> jd 0)
               (if has-year
                 (date-from-yearday yr jd)
