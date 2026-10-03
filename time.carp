@@ -784,7 +784,7 @@ The format specifiers mirror those of `strftime`:
 - `%M` — 2-digit minute (00–59)
 - `%S` — 2-digit second (00–59)
 - `%n` — 9-digit nanoseconds
-- `%z` — timezone offset (+HHMM or -HHMM, minutes 00–59)
+- `%z` — timezone offset (+HHMM or -HHMM, hours 00–23, minutes 00–59)
 - `%Z` — timezone name (alphabetic characters)
 - `%a` — abbreviated weekday name (Mon, Tue, ...)
 - `%A` — full weekday name (Monday, Tuesday, ...)
@@ -1082,7 +1082,7 @@ Example:
                               (parse-digits input (+ ipos 1) 4)
                               (Maybe.Nothing))
                             (Maybe.Just hhmm)
-                              (if (> (mod hhmm 100) 59)
+                              (if (or (> (/ hhmm 100) 23) (> (mod hhmm 100) 59))
                                 (do
                                   (set! err
                                         (String.concat
