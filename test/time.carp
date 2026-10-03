@@ -1692,6 +1692,39 @@
     &(Result.Error @"%z out of range: +0560")
     &(Datetime.strptime "+0560" "%z")
     "strptime rejects a %z offset with 60 minutes")
+  (assert-equal test
+    &(Result.Error @"%z out of range: +2400")
+    &(Datetime.strptime "+2400" "%z")
+    "strptime rejects a %z offset with 24 hours")
+  (assert-equal test
+    &(Result.Error @"%z out of range: -2400")
+    &(Datetime.strptime "-2400" "%z")
+    "strptime rejects a negative %z offset with 24 hours")
+  (assert-equal test
+    &(Result.Error @"%z out of range: +9959")
+    &(Datetime.strptime "+9959" "%z")
+    "strptime rejects a %z offset with 99 hours")
+  (assert-equal test
+    86340l
+    (match (Datetime.strptime "+2359" "%z")
+      (Result.Success dt)
+        @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero)))
+      (Result.Error _) -1l)
+    "strptime accepts a %z offset of +2359")
+  (assert-equal test
+    -86340l
+    (match (Datetime.strptime "-2359" "%z")
+      (Result.Success dt)
+        @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero)))
+      (Result.Error _) -1l)
+    "strptime accepts a %z offset of -2359")
+  (assert-equal test
+    0l
+    (match (Datetime.strptime "+0000" "%z")
+      (Result.Success dt)
+        @(Timezone.delta &(Maybe.from @(Datetime.tz &dt) (Timezone.zero)))
+      (Result.Error _) -1l)
+    "strptime accepts a %z offset of +0000")
   (assert-true test
     (Result.error? &(Datetime.strptime "+ 530" "%z"))
     "strptime rejects a space-padded %z offset")
