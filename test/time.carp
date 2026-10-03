@@ -1619,6 +1619,120 @@
     "strptime reports an unknown specifier byte without re-encoding it")
 
   (assert-equal test
+    &(Result.Error @"%d out of range for 2100-02: 31")
+    &(Datetime.strptime "2100-02-31" "%Y-%m-%d")
+    "strptime rejects 31 February")
+  (assert-equal test
+    &(Result.Error @"%m out of range: 13")
+    &(Datetime.strptime "2024-13-01" "%Y-%m-%d")
+    "strptime rejects month 13")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-00-10" "%Y-%m-%d"))
+    "strptime rejects month 00")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-03-00" "%Y-%m-%d"))
+    "strptime rejects day 00")
+  (assert-equal test
+    &(Result.Error @"failed to parse %d")
+    &(Datetime.strptime "2024-03--5" "%Y-%m-%d")
+    "strptime rejects a negative day")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-03-+5" "%Y-%m-%d"))
+    "strptime rejects a day with a plus sign")
+  (assert-true test
+    (Result.error?
+      &(Datetime.strptime
+        &(String.concat &[@"2024-03-" (String.from-chars &[\tab \6])])
+        "%Y-%m-%d"))
+    "strptime rejects a tab-padded day")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-03-1 " "%Y-%m-%d"))
+    "strptime rejects a two-digit field with trailing whitespace")
+  (assert-true test
+    (Result.error? &(Datetime.strptime " 999" "%Y"))
+    "strptime rejects a space-padded four-digit year")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 15))
+    &(Datetime.strptime "2024- 3-15" "%Y-%m-%d")
+    "strptime accepts a space-padded two-digit month")
+  (assert-equal test
+    &(Result.Success (at 1994 11 6 8 49 37))
+    &(Datetime.strptime "Sun Nov  6 08:49:37 1994" "%a %b %d %H:%M:%S %Y")
+    "strptime accepts the space-padded day of an asctime date")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-03-15 99:00" "%Y-%m-%d %H:%M"))
+    "strptime rejects hour 99")
+  (assert-equal test
+    &(Result.Error @"%M out of range: 99")
+    &(Datetime.strptime "12:99:99" "%H:%M:%S")
+    "strptime rejects minute 99")
+  (assert-equal test
+    &(Result.Success (at 0 0 0 23 59 59))
+    &(Datetime.strptime "23:59:59" "%H:%M:%S")
+    "strptime accepts 23:59:59")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "24:00" "%H:%M"))
+    "strptime rejects hour 24")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "12:60:00" "%H:%M:%S"))
+    "strptime rejects minute 60")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "12:00:60" "%H:%M:%S"))
+    "strptime rejects second 60")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "13:00 PM" "%I:%M %p"))
+    "strptime rejects %I 13")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "00:30 AM" "%I:%M %p"))
+    "strptime rejects %I 00")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "+0999" "%z"))
+    "strptime rejects a %z offset with 99 minutes")
+  (assert-equal test
+    &(Result.Error @"%z out of range: +0560")
+    &(Datetime.strptime "+0560" "%z")
+    "strptime rejects a %z offset with 60 minutes")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "+ 530" "%z"))
+    "strptime rejects a space-padded %z offset")
+  (assert-equal test
+    &(Result.Error @"unexpected trailing input at position 10: \" junk\"")
+    &(Datetime.strptime "2024-03-15 junk" "%Y-%m-%d")
+    "strptime rejects trailing text")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-03-15 " "%Y-%m-%d"))
+    "strptime rejects a single trailing space")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 2 29))
+    &(Datetime.strptime "2024-02-29" "%Y-%m-%d")
+    "strptime accepts 29 February 2024")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2000 2 29))
+    &(Datetime.strptime "2000-02-29" "%Y-%m-%d")
+    "strptime accepts 29 February 2000")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2100-02-29" "%Y-%m-%d"))
+    "strptime rejects 29 February 2100")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 4 30))
+    &(Datetime.strptime "2024-04-30" "%Y-%m-%d")
+    "strptime accepts 30 April")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "2024-04-31" "%Y-%m-%d"))
+    "strptime rejects 31 April")
+  (assert-true test
+    (Result.error? &(Datetime.strptime "Feb 30" "%b %d"))
+    "strptime checks the day against a month name")
+  (assert-equal test
+    &(Result.Success (Datetime.date 0 2 29))
+    &(Datetime.strptime "02-29" "%m-%d")
+    "strptime accepts 29 February without a year, in leap year 0")
+  (assert-equal test
+    &(Result.Success (Datetime.date 2024 3 0))
+    &(Datetime.strptime "2024-03" "%Y-%m")
+    "strptime leaves the day of a partial date at 0")
+
+  (assert-equal test
     &@""
     &(roundtrip-sweep SWEEP-FROM SWEEP-TO "%Y-%j")
     "every date in the sweep survives a %Y-%j roundtrip")
