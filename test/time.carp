@@ -33,6 +33,9 @@
                  (Maybe.Nothing)
                  (Maybe.Nothing)))
 
+; the smallest Long, from parts under 2^31 (see `nanos`).
+(def LONG-MIN (* -2l (* (* 65536l 32768l) (* 65536l 32768l))))
+
 ; seconds since the epoch, from a day count and a time of day (see `nanos`).
 (defn epoch-at [days tod]
   (+ (* (Long.from-int days) 86400l) (Long.from-int tod)))
@@ -2287,6 +2290,72 @@
                         (Maybe.Nothing))
         &(Duration.plus &(Duration.days 2147483647) &(Duration.hours 23))))
     "add: saturation leaves room for the time-of-day carry")
+
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(stamp &(Datetime.add-seconds &(at 1 1 1 0 0 0) -1))
+    "add-seconds: one second before the first saturates")
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(stamp &(Datetime.add-seconds &(at 1 1 1 0 0 0) -2147483648))
+    "add-seconds: Int.MIN seconds before the first saturates")
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(stamp &(Duration.sub &(at 1 1 1 0 0 0) &(Duration.seconds 1)))
+    "sub: one second before the first saturates")
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(stamp &(Duration.sub &(at 1 1 1 12 0 0) &(Duration.days 1)))
+    "sub: saturating at the first date also saturates the time")
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(let [cet (Timezone.init @"CET" 3600l false)]
+      (stamp &(Datetime.to-utc &(at-tz 1 1 1 0 30 0 cet))))
+    "to-utc: an instant before the first saturates")
+  (assert-equal test
+    &@"5879611-07-11 23:59:59"
+    &(stamp &(Datetime.add-seconds &(at 5879611 7 11 23 59 59) 1))
+    "add-seconds: one second past the last saturates")
+  (assert-equal test
+    &@"5879611-07-11 23:59:59"
+    &(stamp &(Datetime.add-seconds &(at 5879611 7 11 0 0 0) 2147483647))
+    "add-seconds: Int.MAX seconds from the last date saturates")
+  (assert-equal test
+    &@"5879611-07-11 23:59:59"
+    &(stamp &(Duration.add &(at 5879611 7 11 12 0 0) &(Duration.days 1)))
+    "add: saturating at the last date also saturates the time")
+  (assert-true test
+    (let [t (Datetime.init 5879611
+                           7
+                           11
+                           (Maybe.Just 23)
+                           (Maybe.Just 59)
+                           (Maybe.Just 59)
+                           (Maybe.Just 500000000)
+                           (Maybe.Nothing))]
+      (Datetime.= &(Datetime.add-seconds &t 1) &t))
+    "add-seconds: saturation keeps the nanoseconds")
+  (assert-equal test
+    &@"5879611-07-11 23:59:59"
+    &(stamp &(Datetime.from-unix-timestamp (* 1730000000l 1000000l)))
+    "from-unix-timestamp: a microsecond timestamp saturates")
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(stamp &(Datetime.from-unix-timestamp (- (* -621355968l 100l) 1l)))
+    "from-unix-timestamp: one second before 0001-01-01 saturates")
+  (assert-equal test
+    &@"5879611-07-11 23:59:59"
+    &(stamp &(Datetime.from-unix-timestamp (neg (+ LONG-MIN 1l))))
+    "from-unix-timestamp: the largest Long saturates")
+  (assert-equal test
+    &@"0001-01-01 00:00:00"
+    &(stamp &(Datetime.from-unix-timestamp LONG-MIN))
+    "from-unix-timestamp: the smallest Long saturates")
+  (assert-equal test
+    &@"5879611-07-11 23:59:59"
+    &(stamp
+      &(Duration.sub &(at 2024 1 1 0 0 0) &(Duration.from-seconds LONG-MIN)))
+    "sub: the smallest Long saturates at the last second")
 
   (assert-equal test
     (* 36525l 86400l)

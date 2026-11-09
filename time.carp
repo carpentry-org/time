@@ -312,9 +312,25 @@ and `2024-12-30` is week `01` of `2025`.")
             (String.concat &[spec @" and weekday fall outside " (Int.str y)]))
         (Result.Success (from-ordinal ord)))))
 
+  (hidden set-ordinal!)
+  ; outside ordinals 1 to Int.MAX the whole instant saturates at the nearer end
+  (defn set-ordinal! [dt ord]
+    (let-do [hi (Long.from-int Int.MAX)
+             c (Long.clamp 1l hi ord)
+             d (from-ordinal (Long.to-int c))]
+      (set-day! dt @(day &d))
+      (set-month! dt @(month &d))
+      (set-year! dt @(year &d))
+      (when-do (/= c ord)
+        (let-do [top (= c hi)]
+          (set-hours! dt (Maybe.Just (if top 23 0)))
+          (set-minutes! dt (Maybe.Just (if top 59 0)))
+          (set-seconds! dt (Maybe.Just (if top 59 0)))))))
+
   (doc add-seconds "adds a number of seconds `n` to a `Datetime`.
 
-If `n` is negative, it will be subtracted instead.")
+If `n` is negative, it will be subtracted instead. A result outside the
+representable range saturates at its first or last second.")
   (defn add-seconds [d n]
     (if (neg? n)
       (let-do [nd @d
@@ -335,11 +351,10 @@ If `n` is negative, it will be subtracted instead.")
                 (set-hours! &nd (Maybe.Just (mod- ha 24)))
                 (if (>= ha 0)
                   nd
-                  (let-do [ord (to-ordinal d)
-                           nnd (from-ordinal (+ ord (div- ha 24)))]
-                    (set-day! &nd @(day &nnd))
-                    (set-month! &nd @(month &nnd))
-                    (set-year! &nd @(year &nnd))
+                  (do
+                    (set-ordinal! &nd
+                                  (+ (Long.from-int (to-ordinal d))
+                                     (Long.from-int (div- ha 24))))
                     nd)))))))
       (let-do [nd @d
                days (/ n DAY)
@@ -360,11 +375,10 @@ If `n` is negative, it will be subtracted instead.")
                 (set-hours! &nd (Maybe.Just (Int.mod ha 24)))
                 (if (and (< ha 24) (= days 0))
                   nd
-                  (let-do [ord (to-ordinal d)
-                           nnd (from-ordinal (+ ord (+ days (/ ha 24))))]
-                    (set-day! &nd @(day &nnd))
-                    (set-month! &nd @(month &nnd))
-                    (set-year! &nd @(year &nnd))
+                  (do
+                    (set-ordinal! &nd
+                                  (+ (Long.from-int (to-ordinal d))
+                                     (Long.from-int (+ days (/ ha 24)))))
                     nd)))))))))
 
   (private EPOCH-ORDINAL)
@@ -389,23 +403,27 @@ a UNIX timestamp, i.e. the number of seconds elapsed since the 1st of January,
 
   (doc from-unix-timestamp "returns the `Datetime` equivalent to the UNIX
 timestamp `ts`, i.e. the number of seconds elapsed since the 1st of January,
-1970.")
+1970.
+
+A timestamp outside the representable range saturates, as in
+[`add-seconds`](#add-seconds).")
   (defn from-unix-timestamp [ts]
     (let-do [day-secs (Long.from-int DAY)
-             days (Long.to-int (/ ts day-secs))
-             secs (Long.to-int (- ts (* (Long.from-int days) day-secs)))]
+             days (/ ts day-secs)
+             secs (Long.to-int (- ts (* days day-secs)))]
       ; / and mod truncate toward zero, so a negative ts can leave secs
       ; negative; borrow a day so the time-of-day stays in 0..86399
-      (when-do (< secs 0) (set! days (Int.dec days)) (set! secs (+ secs DAY)))
-      (let [d (from-ordinal (+ EPOCH-ORDINAL days))]
-        (init @(year &d)
-              @(month &d)
-              @(day &d)
-              (Maybe.Just (/ secs HOUR))
-              (Maybe.Just (/ (mod secs HOUR) MINUTE))
-              (Maybe.Just (mod secs MINUTE))
-              (Maybe.Nothing)
-              (Maybe.Nothing)))))
+      (when-do (< secs 0) (set! days (Long.dec days)) (set! secs (+ secs DAY)))
+      (let-do [nd (init 1
+                        1
+                        1
+                        (Maybe.Just (/ secs HOUR))
+                        (Maybe.Just (/ (mod secs HOUR) MINUTE))
+                        (Maybe.Just (mod secs MINUTE))
+                        (Maybe.Nothing)
+                        (Maybe.Nothing))]
+        (set-ordinal! &nd (+ (Long.from-int EPOCH-ORDINAL) days))
+        nd)))
 
   (doc utc? "checks whether the timezone of the `Datetime` `dt` is UTC. The
 timezone name comparison is case-insensitive. It will also return true if the
@@ -1383,34 +1401,28 @@ longer than about 68 years in seconds. This is the counterpart to
 
   (private shift)
   (hidden shift)
-  ; A Datetime names its date by an Int ordinal, and from-ordinal is only
-  ; defined from 1 up, so saturate at both ends rather than wrap out of the
-  ; representable range. The time-of-day remainder is applied first so that its
-  ; own day carry happens before the clamp and cannot push back out of range.
-  (defn shift [dt total]
-    (let-do [nd (Datetime.add-seconds dt (Long.to-int (mod total 86400l)))
-             ord (Long.clamp 1l
-                             (Long.from-int Int.MAX)
-                             (+
-                               (Long.from-int (Datetime.to-ordinal &nd))
-                               (/ total 86400l)))
-             d (Datetime.from-ordinal (Long.to-int ord))]
-      (Datetime.set-day! &nd @(Datetime.day &d))
-      (Datetime.set-month! &nd @(Datetime.month &d))
-      (Datetime.set-year! &nd @(Datetime.year &d))
+  ; `secs` is the sub-day remainder, with the same sign as `days`
+  (defn shift [dt days secs]
+    (let-do [nd (Datetime.add-seconds dt secs)]
+      (Datetime.set-ordinal! &nd
+                             (+ (Long.from-int (Datetime.to-ordinal &nd)) days))
       nd))
 
   (doc add "adds a `Duration` `delta` to a `Datetime` `dt`.
 
 A `Duration` can name a span far wider than the range of dates a `Datetime` can
 represent. A result that would fall outside that range saturates at the first
-or last representable date rather than wrapping.")
-  (defn add [dt delta] (shift dt @(seconds- delta)))
+or last representable second rather than wrapping.")
+  (defn add [dt delta]
+    (let [t @(seconds- delta)]
+      (shift dt (/ t 86400l) (Long.to-int (mod t 86400l)))))
 
   (doc sub "subtracts a `Duration` `delta` from a `Datetime` `dt`.
 
 Out-of-range results saturate, as in [`add`](#add).")
-  (defn sub [dt delta] (shift dt (neg @(seconds- delta))))
+  (defn sub [dt delta]
+    (let [t @(seconds- delta)]
+      (shift dt (neg (/ t 86400l)) (neg (Long.to-int (mod t 86400l))))))
 
   (doc between
     "returns the signed difference between the `Datetime`s `a` and `b`
