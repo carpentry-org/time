@@ -126,7 +126,7 @@ it.")
   (private days-before-year)
   (hidden days-before-year)
   (defn days-before-year [year]
-    (let [y (Int.dec year)] (- (+ (* y 365) (+ (/ y 4) (/ y 400))) (/ y 100))))
+    (let [y (Int.dec year)] (+ (+ (- (* y 365) (/ y 100)) (/ y 4)) (/ y 400))))
 
   (private DI400Y)
   (hidden DI400Y)
@@ -454,17 +454,29 @@ that is already UTC — or that has no timezone, which the library treats as UTC
 `target`, preserving the instant: the wall-clock fields are shifted so they name
 the same moment measured in `target`, and the timezone is set to `target`.
 
+A result outside the representable range saturates, as in
+[`add-seconds`](#add-seconds).
+
 ```
 (let [dt (Datetime.init 2024 1 1 (Maybe.Just 22) (Maybe.Just 0) (Maybe.Just 0)
                         (Maybe.Nothing) (Maybe.Just (Timezone.init @\"EST\" -18000l false)))]
   (Datetime.isotime &(Datetime.in-timezone &dt &Timezone.utc))) ; => \"03:00:00\"
 ```")
   (defn in-timezone [dt target]
-    (let-do [u (to-utc dt)
-             secs (Long.to-int @(Timezone.delta target))
-             nd (add-seconds &u secs)]
-      (set-tz! &nd (Maybe.Just @target))
-      nd))
+    (let-do [a @dt]
+      ; convert a copy dated at the epoch, so only the final date can saturate
+      (set-ordinal! &a (Long.from-int EPOCH-ORDINAL))
+      (let-do [u (to-utc &a)
+               nd (add-seconds &u (Long.to-int @(Timezone.delta target)))
+               moved (- (to-ordinal &nd) EPOCH-ORDINAL)]
+        (set-year! &nd @(year dt))
+        (set-month! &nd @(month dt))
+        (set-day! &nd @(day dt))
+        (when (or (/= moved 0) (/= (to-ordinal &u) EPOCH-ORDINAL))
+          (set-ordinal! &nd
+                        (+ (Long.from-int (to-ordinal dt)) (Long.from-int moved))))
+        (set-tz! &nd (Maybe.Just @target))
+        nd)))
 
   (doc isoformat "returns the ISO format for the `Datetime` `dt`.
 
@@ -1276,16 +1288,23 @@ optional ones.")
 
 Unlike `=`, which compares the wall-clock fields directly and is timezone-
 unaware, this compares the two `Datetime`s as UTC instants (via
-[`to-utc`](#to-utc)), so e.g. `14:00 EST` and `19:00 UTC` are equal. The
-comparison is to the second, with `nanoseconds` as the tiebreaker.")
+[`to-unix-timestamp`](#to-unix-timestamp)), so e.g. `14:00 EST` and `19:00 UTC`
+are equal. The comparison is to the second, with `nanoseconds` as the
+tiebreaker.")
   (defn equal-instant? [a b]
-    (let [ua (to-utc a)
-          ub (to-utc b)] (and (not (< &ua &ub)) (not (> &ua &ub)))))
+    (and
+      (Long.= (to-unix-timestamp a) (to-unix-timestamp b))
+      (Int.= (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))))
 
   (doc before-instant? "checks whether `a` names an earlier instant than `b`,
 comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is
 the timezone-aware counterpart to `<`.")
-  (defn before-instant? [a b] (< &(to-utc a) &(to-utc b)))
+  (defn before-instant? [a b]
+    (let [ta (to-unix-timestamp a)
+          tb (to-unix-timestamp b)]
+      (if (Long.= ta tb)
+        (Int.< (Maybe.from @(nanoseconds a) 0) (Maybe.from @(nanoseconds b) 0))
+        (Long.< ta tb))))
 
   (doc after-instant? "checks whether `a` names a later instant than `b`,
 comparing them as UTC instants (see [`equal-instant?`](#equal-instant?)). This is

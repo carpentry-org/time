@@ -2356,6 +2356,44 @@
     &(stamp
       &(Duration.sub &(at 2024 1 1 0 0 0) &(Duration.from-seconds LONG-MIN)))
     "sub: the smallest Long saturates at the last second")
+  (assert-equal test
+    &@"5879611-07-11 23:59:30"
+    &(stamp &(Duration.add &(at 5879611 7 11 23 59 50) &(Duration.seconds -20)))
+    "add: a negative delta on the last day stays exact")
+  (assert-equal test
+    &@"0001-01-01 01:30:00"
+    &(stamp
+      &(Datetime.in-timezone
+        &(at-tz 1 1 1 0 30 0 (Timezone.init @"A" 3600l false))
+        &(Timezone.init @"B" 7200l false)))
+    "in-timezone: exact when the UTC time is before the first")
+  (assert-equal test
+    &@"5879611-07-11 22:30:00"
+    &(stamp
+      &(Datetime.in-timezone
+        &(at-tz 5879611 7 11 23 30 0 (Timezone.init @"A" -3600l false))
+        &(Timezone.init @"B" -7200l false)))
+    "in-timezone: exact when the UTC time is past the last")
+  (assert-false test
+    (Datetime.equal-instant?
+      &(at-tz 1 1 1 0 10 0 (Timezone.init @"X" 3600l false))
+      &(at-tz 1 1 1 0 20 0 (Timezone.init @"X" 3600l false)))
+    "equal-instant?: separates instants whose UTC time is before the first")
+  (assert-true test
+    (Datetime.before-instant?
+      &(at-tz 1 1 1 0 10 0 (Timezone.init @"X" 3600l false))
+      &(at-tz 1 1 1 0 20 0 (Timezone.init @"X" 3600l false)))
+    "before-instant?: orders instants whose UTC time is before the first")
+  (assert-false test
+    (Datetime.equal-instant?
+      &(at-tz 5879611 7 11 23 30 0 (Timezone.init @"X" -3600l false))
+      &(at-tz 5879611 7 11 23 40 0 (Timezone.init @"X" -3600l false)))
+    "equal-instant?: separates instants whose UTC time is past the last")
+  (assert-true test
+    (Datetime.before-instant?
+      &(at-tz 5879611 7 11 23 30 0 (Timezone.init @"X" -3600l false))
+      &(at-tz 5879611 7 11 23 40 0 (Timezone.init @"X" -3600l false)))
+    "before-instant?: orders instants whose UTC time is past the last")
 
   (assert-equal test
     (* 36525l 86400l)
